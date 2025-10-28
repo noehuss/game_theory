@@ -138,9 +138,9 @@ class MPEC:
 
 class MPEClinearized(MPEC):
     def objective_function(self):
-        sum_cost = sum([self.marginal_costs[i]*self.model.Pg[i] for i in self.model.Omega])
-        sum_mu_max = sum([-self.model.mu_max[i] * self.model.capacities[i] for i in self.model.I])
-        sum_omega_bar = sum([self.model.alphas[i]*self.model.Pg[i] for i in self.model.OmegaBar])
-        sum_pmax = sum([self.model.mu_max[i]*self.model.capacities[i] for i in self.model.Omega])
+        sum_cost = sum([self.marginal_costs[i]*self.model.Pg[i] for i in self.model.Omega]) #type: ignore
+        sum_mu_max = sum([-self.model.mu_max[i] * self.model.capacities[i] for i in self.model.I]) #type: ignore
+        sum_omega_bar = sum([self.model.alphas[i]*self.model.Pg[i] for i in self.model.OmegaBar]) #type: ignore
+        sum_pmax = sum([self.model.mu_max[i]*self.model.capacities[i] for i in self.model.Omega]) #type: ignore
 
         self.model.obj = Objective(expr=(-(self.model.price*self.demand + sum_mu_max - sum_omega_bar + sum_pmax) + sum_cost), sense=minimize) #type: ignore

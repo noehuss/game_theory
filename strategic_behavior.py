@@ -64,7 +64,7 @@ class MPEC:
                 return model.alphas[i] + model.mu_max[i] - model.mu_min[i] - model.price == 0
         self.model.constraint_price_balance = Constraint(self.model.I, rule=rule_price_balance)
 
-        self.model.constraint_power_balance = Constraint(rule=(self.demand)-sum(self.model.Pg[i] for i in self.model.I)==0) #type: ignore
+        self.model.constraint_power_balance = Constraint(rule=(self.demand-sum(self.model.Pg[i] for i in self.model.I)==0)) #type: ignore
         
         # Alphas inequalities
         def rule_inequality_up(model, i, j):
@@ -72,7 +72,7 @@ class MPEC:
         self.model.constraint_in_up_alpha_g = Constraint(self.model.Omega, self.model.OmegaBar, rule=rule_inequality_up)
 
         def rule_inequality_down(model, i, j):
-            return model.alpha_g[i] >= (model.alphas[j] + self.tau) + self.bigM * (1 - model.y_diff[j]) #type: ignore
+            return model.alpha_g[i] >= (model.alphas[j] + self.tau) - self.bigM * (1 - model.y_diff[j]) #type: ignore
         self.model.constraint_in_down_alpha_g = Constraint(self.model.Omega, self.model.OmegaBar, rule=rule_inequality_down)
 
         # Complementary slackness constraints

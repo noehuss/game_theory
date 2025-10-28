@@ -6,6 +6,8 @@ Simplified model of strategic bidding in a liberalized electricity market.
 
 - $I$: Set of generators
 - $J$: Set of producers
+- $\Omega_j^I$: Subset of generators $I$ that belong to producer $j$ 
+- $\bar{\Omega_j^I} = I $
 
 $$
 \begin{equation}

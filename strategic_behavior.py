@@ -20,12 +20,12 @@ class MPEC:
         self.upper_bid = upper_bid
         self.lower_bid = lower_bid
         self.prod_df = prod_df
-        # self.indexes()
-        # self.parameters()
-        # self.variables()
-        # self.constraints()
-        # self.objective_function()
-        # self.solve()
+        self.indexes()
+        self.parameters()
+        self.variables()
+        self.constraints()
+        self.objective_function()
+        self.solve()
 
     def indexes(self):
         self.model.Omega = Set(initialize = self.prod_df[self.prod_df['producers']==self.producer].index.tolist())
@@ -33,8 +33,8 @@ class MPEC:
         self.model.I = Set(initialize = self.prod_df.index.tolist())
 
     def parameters(self):
-        self.model.capacities = Param(self.model.G, initialize = self.prod_df['capacities'].tolist())
-        self.model.aplhas = Param(self.model.G, initialize = self.alphas)
+        self.model.capacities = Param(self.model.I, initialize = self.prod_df['capacities'].tolist())
+        self.model.alphas = Param(self.model.I, initialize = self.alphas)
 
     def variables(self):
         # Production
@@ -68,25 +68,37 @@ class MPEC:
         
         # Alphas inequalities
         def rule_inequality_up(model, i, j):
-            return model.alpha_g[i] <= (model.aplhas[j] - self.tau) + self.bigM * (model.y_diff[j]) #type: ignore
+            return model.alpha_g[i] <= (model.alphas[j] - self.tau) + self.bigM * (model.y_diff[j]) #type: ignore
         self.model.constraint_in_up_alpha_g = Constraint(self.model.Omega, self.model.OmegaBar, rule=rule_inequality_up)
 
         def rule_inequality_down(model, i, j):
-            return model.alpha_g[i] >= (model.aplhas[j] + self.tau) + self.bigM * (1 - model.y_diff[j]) #type: ignore
+            return model.alpha_g[i] >= (model.alphas[j] + self.tau) + self.bigM * (1 - model.y_diff[j]) #type: ignore
         self.model.constraint_in_down_alpha_g = Constraint(self.model.Omega, self.model.OmegaBar, rule=rule_inequality_down)
 
+        # Complementary slackness constraints
+        def rule_capamax(model, i):
+            return model.Pg[i] <= model.capacities[i]
+        self.model.constraint_capamax = Constraint(self.model.I, rule=rule_capamax)
+
         def rule_pmin(model,i):
-            return model.Pg[i] <= self.bigM*model.zmin[i]
-        
+            return model.Pg[i] <= self.bigM*model.z_min[i]
         self.model.constraint_pmin_binary = Constraint(self.model.I, rule= rule_pmin)
 
-        def rule_mu_min_constraint(model,i):
-            return model.mu_min[i]<= self.bigM*(1-model.zmin[i])
-        
-        self.model.constraint_mu_min_binary = Constraint(self.model.I, rule= rule_mu_min_constraint)
+        def rule_mu_min(model,i):
+            return model.mu_min[i]<= self.bigM*(1-model.z_min[i])
+        self.model.constraint_mu_min_binary = Constraint(self.model.I, rule= rule_mu_min)
+
+        def rule_pgmax(model, i):
+            return model.capacities[i] - model.Pg[i] <= self.bigM*model.z_max[i]
+        self.model.constraint_pgmax = Constraint(self.model.I, rule=rule_pgmax)
+
+        def rule_mu_max(model, i):
+            return model.mu_max[i] <= self.bigM*(1-model.z_max[i])
+        self.model.constraint_mu_max = Constraint(self.model.I, rule=rule_mu_max)
 
     def objective_function(self):
-        pass
+        # objective function
+        self.model.obj = Objective(expr=sum([-self.model.price*self.model.Pg[i] + self.marginal_costs[i]*self.model.Pg[i] for i in self.model.Omega]), sense=minimize) #type: ignore
 
     def solve(self):
         # Dual
@@ -101,7 +113,7 @@ class MPEC:
         self.model.constraint_price_balance.display()
         self.model.constraint_in_up_alpha_g.display()
         self.model.constraint_in_down_alpha_g.display()
-        self.model.y.display()
+        self.model.y_diff.display()
 
 
     def get_profit(self):
@@ -113,4 +125,4 @@ class MPEC:
     def update_alphas(self):
         for i in self.prod_df[self.prod_df['producers']==self.producer].index.tolist():
             self.alphas[i] = value(self.model.alpha_g[i]) #type: ignore
-
+        return self.alphas

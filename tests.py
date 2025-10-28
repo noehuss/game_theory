@@ -1,4 +1,5 @@
 from market_clearing import MarketClearing
+from strategic_behavior import MPEC
 import pandas as pd
 
 prod_df = pd.DataFrame({
@@ -8,6 +9,9 @@ prod_df = pd.DataFrame({
     'maxFuelCosts': [15, 60, 70] 
 })
 
-demand = 150
+demand = 70
 mc = MarketClearing(bids=prod_df['minFuelCosts'].to_list(), marginal_costs=prod_df['minFuelCosts'].to_list(), demand=demand, prod_df=prod_df)
 print(mc.get_price())
+
+mpec = MPEC(producer='P1', alphas=prod_df['minFuelCosts'].to_list(), marginal_costs=prod_df['minFuelCosts'].to_list(), prod_df=prod_df, demand=demand)
+print(mpec.get_profit())

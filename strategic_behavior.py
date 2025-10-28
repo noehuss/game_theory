@@ -125,6 +125,16 @@ class MPEC:
         for i in self.prod_df[self.prod_df['producers']==self.producer].index.tolist():
             self.alphas[i] = value(self.model.alpha_g[i]) #type: ignore
         return self.alphas
+    
+    def construct_df(self):
+        """Dataframe with production, bids and prices"""
+        data = {
+            'Production': [value(self.model.Pg[i]) for i in self.model.I],
+            'Bids': self.update_alphas(),
+            'Producer': [],
+        }
+
+        return pd.DataFrame(data)
 
 class MPEClinearized(MPEC):
     def objective_function(self):

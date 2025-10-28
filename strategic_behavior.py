@@ -70,3 +70,13 @@ class MPEC:
         def rule_inequality_up(model, i, j):
             return model.alpha_g[i] <= (model.aplhas[j] - self.tau) + self.bigM * (model.y_diff[j]) #type: ignore
         
+        def rule_pmin(model,i):
+            return model.Pg[i] <= self.bigM*model.zmin[i]
+        
+        self.model.constraint_pmin_binary = Constraint(self.model.I, rule= rule_pmin)
+
+        def rule_mu_min_constraint(model,i):
+            return model.mu_min[i]<= self.bigM*(1-model.zmin[i])
+        
+        self.model.constraint_mu_min_binary = Constraint(self.model.I, rule= rule_mu_min_constraint)
+

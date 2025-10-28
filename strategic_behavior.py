@@ -41,7 +41,7 @@ class MPEC:
         self.model.Pg = Var(self.model.I, domain=NonNegativeReals)
 
         # Bids
-        self.model.alpha_g = Var(self.model.Omega, domain=NonNegativeReals, bounds=(lower_bid, upper_bid))
+        self.model.alpha_g = Var(self.model.Omega, domain=NonNegativeReals, bounds=(self.lower_bid, self.upper_bid))
                 
         self.model.price = Var(domain=Reals)
 
@@ -69,4 +69,38 @@ class MPEC:
         # Alphas inequalities
         def rule_inequality_up(model, i, j):
             return model.alpha_g[i] <= (model.aplhas[j] - self.tau) + self.bigM * (model.y_diff[j]) #type: ignore
-        
+        self.model.constraint_in_up_alpha_g = Constraint(self.model.Omega, self.model.OmegaBar, rule=rule_inequality_up)
+
+        def rule_inequality_down(model, i, j):
+            return model.alpha_g[i] >= (model.aplhas[j] + self.tau) + self.bigM * (1 - model.y_diff[j]) #type: ignore
+        self.model.constraint_in_down_alpha_g = Constraint(self.model.Omega, self.model.OmegaBar, rule=rule_inequality_down)
+
+
+    def objective_function(self):
+        pass
+
+    def solve(self):
+        # Dual
+        self.model.dual = Suffix(direction=Suffix.IMPORT)
+        # Create a solver
+        solver = SolverFactory("gurobi", solver_io="python")  # Make sure Gurobi is installed and properly configured
+        # Solve the model
+        solution = solver.solve(self.model, tee=True)
+        self.model.Pg.display()
+        self.model.price.display()
+        self.model.alpha_g.display()
+        self.model.constraint_price_balance.display()
+        self.model.constraint_in_up_alpha_g.display()
+        self.model.constraint_in_down_alpha_g.display()
+        self.model.y.display()
+
+
+    def get_profit(self):
+        return - value(self.model.obj) # type: ignore
+    
+    def get_price(self):
+        return value(self.model.price)
+    
+    def update_alphas(self):
+        for i in self.prod_df[self.prod_df['producers']==self.producer].index.tolist():
+            self.alphas[i] = value(self.model.alpha_g[i]) #type: ignore

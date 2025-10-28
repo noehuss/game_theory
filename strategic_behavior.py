@@ -115,7 +115,6 @@ class MPEC:
         self.model.constraint_in_down_alpha_g.display()
         self.model.y_diff.display()
 
-
     def get_profit(self):
         return - value(self.model.obj) # type: ignore
     
@@ -126,3 +125,7 @@ class MPEC:
         for i in self.prod_df[self.prod_df['producers']==self.producer].index.tolist():
             self.alphas[i] = value(self.model.alpha_g[i]) #type: ignore
         return self.alphas
+
+class MPEClinearized(MPEC):
+    def objective_function(self):
+        self.model.obj = Objective(expr=sum([-self.model.price*self.model.Pg[i] + self.marginal_costs[i]*self.model.Pg[i] for i in self.model.Omega]), sense=minimize) #type: ignore

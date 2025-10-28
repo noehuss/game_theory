@@ -131,7 +131,7 @@ class MPEC:
         data = {
             'Production': [value(self.model.Pg[i]) for i in self.model.I],
             'Bids': self.update_alphas(),
-            'Producer': [],
+            # 'Producer': [],
         }
 
         return pd.DataFrame(data)

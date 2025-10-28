@@ -1,6 +1,11 @@
 # Game theory for electricity market
 Simplified model of strategic bidding in a liberalized electricity market.
 
+## To do next
+- Merit order curve + answer q2 - Noé
+- MPEC linearized - Victor
+- BR - both
+
 ## Model definition
 ### Indexes
 

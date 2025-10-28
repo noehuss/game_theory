@@ -15,3 +15,4 @@ print(mc.get_price())
 
 mpec = MPEC(producer='P1', alphas=prod_df['minFuelCosts'].to_list(), marginal_costs=prod_df['minFuelCosts'].to_list(), prod_df=prod_df, demand=demand, bigM=100)
 print(mpec.get_profit())
+print(mpec.construct_df())

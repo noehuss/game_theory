@@ -75,6 +75,15 @@ class MPEC:
             return model.alpha_g[i] >= (model.aplhas[j] + self.tau) + self.bigM * (1 - model.y_diff[j]) #type: ignore
         self.model.constraint_in_down_alpha_g = Constraint(self.model.Omega, self.model.OmegaBar, rule=rule_inequality_down)
 
+        def rule_pmin(model,i):
+            return model.Pg[i] <= self.bigM*model.zmin[i]
+        
+        self.model.constraint_pmin_binary = Constraint(self.model.I, rule= rule_pmin)
+
+        def rule_mu_min_constraint(model,i):
+            return model.mu_min[i]<= self.bigM*(1-model.zmin[i])
+        
+        self.model.constraint_mu_min_binary = Constraint(self.model.I, rule= rule_mu_min_constraint)
 
     def objective_function(self):
         pass
@@ -104,3 +113,4 @@ class MPEC:
     def update_alphas(self):
         for i in self.prod_df[self.prod_df['producers']==self.producer].index.tolist():
             self.alphas[i] = value(self.model.alpha_g[i]) #type: ignore
+

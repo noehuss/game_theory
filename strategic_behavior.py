@@ -129,7 +129,7 @@ class MPEC:
     def construct_df(self):
         """Dataframe with production, bids and prices"""
         data = {
-            'Production': [value(self.model.Pg[i]) for i in self.model.I],
+            'Production': [value(self.model.Pg[i]) for i in self.model.I], #type: ignore
             'Bids': self.update_alphas(),
             # 'Producer': [],
         }

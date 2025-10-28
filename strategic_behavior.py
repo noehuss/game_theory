@@ -129,9 +129,9 @@ class MPEC:
     def construct_df(self):
         """Dataframe with production, bids and prices"""
         data = {
-            'Production': [value(self.model.Pg[i]) for i in self.model.I], #type: ignore
-            'Bids': self.update_alphas(),
-            # 'Producer': [],
+            'production': [value(self.model.Pg[i]) for i in self.model.I], #type: ignore
+            'bids': self.update_alphas(),
+            'producer': self.prod_df['producers'].to_list(),
         }
 
         return pd.DataFrame(data)

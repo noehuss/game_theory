@@ -132,6 +132,7 @@ class MPEC:
             'production': [value(self.model.Pg[i]) for i in self.model.I], #type: ignore
             'bids': self.update_alphas(),
             'producer': self.prod_df['producers'].to_list(),
+            'capacities': [value(self.model.capacities[i]) for i in self.model.I] #type: ignore
         }
 
         return pd.DataFrame(data)

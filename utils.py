@@ -1,12 +1,13 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-def plot_merit_order(df:pd.DataFrame, demand:int):
+def plot_merit_order(df:pd.DataFrame, demand:int, strategic_producer:str):
     """
     Use a dataframe with:
     production: quantities produced by each producer
     bids: Bids of each producer
-    producer: Producer namez
+    producer: Producer name
+    capacities: Capacities of each generator
     """
     colors = ["#384E77","#8BBEB2","#E6F9AF","pink","limegreen","black","orange","grey","maroon"]
     df["color"] = pd.Series(colors[:len(df)])
@@ -19,10 +20,10 @@ def plot_merit_order(df:pd.DataFrame, demand:int):
         i = df.index.get_loc(index)
         print(i)
         if i == 0:
-            df.loc[index, "xpos"] = df.loc[index, 'production']
+            df.loc[index, "xpos"] = df.at[index, 'capacities']/2
         else:
             print(index)
-            df.loc[index, "xpos"] = df.at[index, 'production']/2 + df.iloc[i-1].at["cumulative_prod"]
+            df.loc[index, "xpos"] = df.at[index, 'capacities']/2 + df.iloc[i-1].at["cumulative_prod"]
 
     def cut_off(demand):
         #To get the cutoff power plant 
@@ -44,17 +45,21 @@ def plot_merit_order(df:pd.DataFrame, demand:int):
     y = df['bids'].values.tolist()
 
     #width
-    w = df['production'].values.tolist()
+    w = df['capacities'].values.tolist()
     cut_off_power_plant = cut_off(demand)
 
     fig = plt.bar(xpos, height=y, width=w, fill=True, color=df["color"].tolist())
 
-    plt.xlim(0, df["production"].sum())
+    plt.xlim(0, df["capacities"].sum())
     plt.ylim(0, df['bids'].max()+20)
 
     plt.hlines(y=df.at[cut_off_power_plant, 'bids'],
                xmin=0,
                xmax=demand,
+               color='gray',
+               linestyle='dashed')
+    
+    plt.axvline(x=demand,
                color='gray',
                linestyle='dashed')
     

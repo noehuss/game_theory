@@ -10,7 +10,7 @@ prod_df = pd.DataFrame({
     'maxFuelCosts': [15, 60, 70] 
 })
 
-demand = 100
+demand = 92
 strategic_producer = 'P1'
 mc = MarketClearing(bids=prod_df['minFuelCosts'].to_list(), marginal_costs=prod_df['minFuelCosts'].to_list(), demand=demand, prod_df=prod_df)
 print(mc.get_price())

@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-def plot_merit_order(df:pd.DataFrame, demand:int, strategic_producer:str):
+def plot_merit_order(df:pd.DataFrame, demand:int, strategic_producer=None, sp_profit=None):
     """
     Use a dataframe with:
     production: quantities produced by each producer
@@ -38,7 +38,6 @@ def plot_merit_order(df:pd.DataFrame, demand:int, strategic_producer:str):
                 return cut_off_power_plant
 
     print(df)               
-    plt.figure(figsize=(20, 12))
     plt.rcParams["font.size"] = 16
 
     xpos = df['xpos'].values.tolist()
@@ -48,30 +47,36 @@ def plot_merit_order(df:pd.DataFrame, demand:int, strategic_producer:str):
     w = df['capacities'].values.tolist()
     cut_off_power_plant = cut_off(demand)
 
-    fig = plt.bar(xpos, height=y, width=w, fill=True, color=df["color"].tolist())
+    fig, ax = plt.subplots(figsize=(16,10))
 
-    plt.xlim(0, df["capacities"].sum())
-    plt.ylim(0, df['bids'].max()+20)
+    ax.bar(xpos, height=y, width=w, fill=True, color=df["color"].tolist())
 
-    plt.hlines(y=df.at[cut_off_power_plant, 'bids'],
+    ax.set_xlim(0, df["capacities"].sum())
+    ax.set_ylim(0, df['bids'].max()+20)
+
+    ax.hlines(y=df.at[cut_off_power_plant, 'bids'],
                xmin=0,
                xmax=demand,
                color='gray',
                linestyle='dashed')
     
-    plt.axvline(x=demand,
+    ax.axvline(x=demand,
                color='gray',
                linestyle='dashed')
     
-    plt.text(x = demand - df.at[cut_off_power_plant, "production"]/2,
+    text = ax.text(x = demand - df.at[cut_off_power_plant, "production"]/2,
             y = df.at[cut_off_power_plant, "bids"] + 5,
             s = f"Electricity price:\n {df.at[cut_off_power_plant, 'bids']} $/MWh",
             ha = 'center',
             color='gray')
+    text.set_bbox(dict(facecolor='white', alpha=1))
 
+    if sp_profit is not None and strategic_producer is not None:
+        text_sp = plt.text(x=0.15, y=0.90, s=f"Strategic producer: {strategic_producer}\nProfit: {sp_profit} $", ha='center',  transform=ax.transAxes, color='gray')
+        text_sp.set_bbox(dict(facecolor='white', alpha=1))
 
-    plt.xlabel("Power plant production (MW)")
-    plt.ylabel("Bids ($/MWh)")
-    plt.legend(fig.patches, df['producer'].to_list(),
+    ax.set_xlabel("Power plant production (MW)")
+    ax.set_ylabel("Bids ($/MWh)")
+    ax.legend(ax.patches, df['producer'].to_list(),
               loc = "best")
     plt.show()

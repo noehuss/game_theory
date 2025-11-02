@@ -24,5 +24,6 @@ utils.plot_merit_order(mpec.construct_df(), demand=demand, strategic_producer=st
 mpec = MPEClinearized(producer='P1', alphas=prod_df['minFuelCosts'].to_list(), marginal_costs=prod_df['minFuelCosts'].to_list(), prod_df=prod_df, demand=demand, bigM=100)
 print(mpec.get_profit())
 print(mpec.construct_df())
+profit = mpec.get_profit()
 
-utils.plot_merit_order(mpec.construct_df(), demand=demand, strategic_producer=strategic_producer)
+utils.plot_merit_order(mpec.construct_df(), demand=demand, strategic_producer=strategic_producer, sp_profit=profit)

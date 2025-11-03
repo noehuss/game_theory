@@ -33,3 +33,4 @@ demand = 120
 br = BR(bids_init=[10, 30, 35], marginal_costs=[10, 30, 35], demand=demand, prod_df=prod_df)
 br.run_BR(50)
 print(br.dict_alphas)
+print(utils.plot_bids_evolution(prod_df, br.dict_alphas, single_graph=False))

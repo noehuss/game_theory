@@ -60,3 +60,6 @@ class MarketClearing:
     
     def get_profits(self):
         return [value(self.model.Pg[g])*self.get_price() - value(self.model.Pg[g])*value(self.marginal_costs[g]) for g in self.model.G] # type: ignore
+
+    def get_dispatch(self):
+        return [value(self.model.Pg[g]) for g in self.model.G] #type: ignore

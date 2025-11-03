@@ -126,7 +126,7 @@ class MPEC:
             self.alphas[i] = value(self.model.alpha_g[i]) #type: ignore
         return self.alphas
     
-    def construct_df(self):
+    def get_results(self) -> pd.DataFrame:
         """Dataframe with production, bids and prices"""
         data = {
             'production': [value(self.model.Pg[i]) for i in self.model.I], #type: ignore

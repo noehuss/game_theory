@@ -19,6 +19,11 @@ class BR():
         self.tol = 0.01
 
     def run_BR(self, nb_iter:int=10):
+        """
+        Run the best response algorithm. Return a dataframe with 
+        the converged equilibrium dispatch and a boolean to indicate if 
+        the equilibrium was reached or not.
+        """
         while self.iteration <= nb_iter and not self.convergenceReached():
             self.iteration += 1
             self.dict_alphas[self.iteration]=self.dict_alphas[self.iteration-1].copy()
@@ -44,5 +49,16 @@ class BR():
         return np.allclose(np.array(self.dict_profits[self.iteration]), 
                            np.array(self.dict_profits[self.iteration-1]), 
                            rtol=self.tol)
-                        
     
+    def get_results(self) -> tuple[pd.DataFrame, bool]:
+        data = {
+            'production':  self.dict_dispatch[self.iteration],
+            'bids': self.dict_alphas[self.iteration],
+            'producer': self.prod_df['producers'].to_list(),
+            'capacities': self.prod_df['capacities'].to_list()
+        }
+
+        return pd.DataFrame(data), self.convergenceReached()
+    
+    def get_price(self) -> float:
+        return self.prices[-1]

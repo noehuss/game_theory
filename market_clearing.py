@@ -63,3 +63,13 @@ class MarketClearing:
 
     def get_dispatch(self):
         return [value(self.model.Pg[g]) for g in self.model.G] #type: ignore
+    
+    def get_results(self) -> pd.DataFrame:
+        """Dataframe with production, bids and prices"""
+        data = {
+            'production': [value(self.model.Pg[i]) for i in self.model.G], #type: ignore
+            'bids': self.marginal_costs,
+            'producer': self.prod_df['producers'].to_list(),
+            'capacities': self.prod_df['capacities'].to_list() #type: ignore
+        }
+        return pd.DataFrame(data)

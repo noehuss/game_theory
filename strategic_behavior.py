@@ -3,7 +3,7 @@ from pyomo.environ import * #type: ignore
 import pandas as pd
 
 class MPEC:
-    def __init__(self, producer: str, alphas: list, marginal_costs: list, prod_df:pd.DataFrame, demand: int, bigM=1e3, tau=1, upper_bid=99, lower_bid=0):
+    def __init__(self, producer: str, alphas: list, marginal_costs: list, prod_df:pd.DataFrame, demand: int, bigM=1e3, tau=1, upper_bid=100, lower_bid=0):
         """
         MPEC algorithm
         producer: producer name()

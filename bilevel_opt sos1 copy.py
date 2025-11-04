@@ -9,12 +9,12 @@ import matplotlib.pyplot as plt
 #                             'minFuelCosts':[30, 2, 50, 20], 'maxFuelCosts':[100, 5, 55, 30]})
 prod_df = pd.DataFrame({
     'producers': ['P1', 'P2', 'P3'],
-    'capacities': [100, 40, 40],       # P1 domine
+    'capacities': [60, 40, 40],       # P1 domine
     'minFuelCosts': [10, 30, 35],      # P1 est beaucoup plus efficace
     'maxFuelCosts': [15, 60, 70]       # P1 a un intervalle faible
 })
 
-demand = 120  # MW
+demand = 112  # MW
 
 # prod_df = pd.DataFrame({
 #     'producers': ['P1', 'P2', 'P3'],

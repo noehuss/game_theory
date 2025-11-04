@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 
 class BR():
-    def __init__(self, bids_init: list, marginal_costs:list, demand:int, prod_df:pd.DataFrame):
+    def __init__(self, bids_init: list, marginal_costs:list, demand:int, prod_df:pd.DataFrame, tolerance:float=0.02):
         self.marginal_costs = marginal_costs
         self.alphas_init = bids_init
         self.demand = demand
@@ -16,7 +16,7 @@ class BR():
         self.dict_profits = {}
         self.dict_dispatch = {}
 
-        self.tol = 0.01
+        self.tol = tolerance
 
     def run_BR(self, nb_iter:int=10):
         """

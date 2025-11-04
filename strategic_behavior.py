@@ -115,7 +115,7 @@ class MPEC:
         self.model.constraint_in_down_alpha_g.display()
         self.model.y_diff.display()
 
-    def get_profit(self):
+    def get_profit(self) -> float:
         return - value(self.model.obj) # type: ignore
     
     def get_price(self):

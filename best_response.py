@@ -2,6 +2,7 @@ from strategic_behavior import MPEClinearized, MPEC
 from market_clearing import MarketClearing
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 class BR():
     def __init__(self, bids_init: list, marginal_costs:list, demand:int, prod_df:pd.DataFrame, tolerance:float=0.02):
@@ -16,6 +17,8 @@ class BR():
         self.dict_profits = {}
         self.dict_dispatch = {}
 
+        self.estimated_profit = {producer: [] for producer in self.prod_df['producers'].values.tolist()}
+
         self.tol = tolerance
 
     def run_BR(self, nb_iter:int=10):
@@ -24,6 +27,7 @@ class BR():
         the converged equilibrium dispatch and a boolean to indicate if 
         the equilibrium was reached or not.
         """
+        self.nb_iter = nb_iter
         while self.iteration <= nb_iter and not self.convergenceReached():
             self.iteration += 1
             self.dict_alphas[self.iteration]=self.dict_alphas[self.iteration-1].copy()
@@ -35,6 +39,8 @@ class BR():
                                       prod_df=self.prod_df, 
                                       demand=self.demand)
                 self.dict_alphas[self.iteration] = mpec.update_alphas()
+                self.estimated_profit[producer].append(mpec.get_profit())
+
             mc = MarketClearing(bids=self.dict_alphas[self.iteration].copy(), 
                                 marginal_costs=self.marginal_costs, 
                                 demand=self.demand, 
@@ -56,7 +62,7 @@ class BR():
 
 
     def convergenceReached(self) -> bool:
-        if self.iteration in [0, 1]:
+        if self.iteration in [0, 1] or self.iteration > self.nb_iter:
             return False
         return np.allclose(np.array(self.dict_profits[self.iteration]), 
                            np.array(self.dict_profits[self.iteration-1]), 
@@ -74,3 +80,34 @@ class BR():
     
     def get_price(self) -> float:
         return self.prices[-1]
+    
+    def plot_estimated_profits_evo(self) -> None:
+        # Create a figure with two subplots side by side
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))
+
+        # Plot estimated profits
+        df_estimated = pd.DataFrame(self.estimated_profit)
+        df_estimated.plot(ax=ax1)
+        ax1.set_title('Estimated Profits Evolution')
+        ax1.set_xlabel('Iteration')
+        ax1.set_ylabel('Profit')
+        ax1.grid(True)
+        ax1.legend(title='Producer')
+
+        # Create DataFrame for market clearing profits
+        market_profits = {producer: [] for producer in self.prod_df['producers'].values.tolist()}
+        for i in range(1, self.iteration + 1):
+            for idx, producer in enumerate(self.prod_df['producers'].values.tolist()):
+                market_profits[producer].append(self.dict_profits[i][idx])
+
+        df_market = pd.DataFrame(market_profits)
+        df_market.plot(ax=ax2)
+        ax2.set_title('Market Clearing Profits Evolution')
+        ax2.set_xlabel('Iteration')
+        ax2.set_ylabel('Profit')
+        ax2.grid(True)
+        ax2.legend(title='Producer')
+
+        plt.tight_layout()
+        plt.show()
+        

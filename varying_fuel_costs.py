@@ -50,7 +50,7 @@ def search_worst_inefficiency(prod_df: pd.DataFrame, demand:int, nb_segments:int
 
     return max(list_PoA)
 
-def inefficiencies(nb_players, capacity, c_lower, c_upper):
+def inefficiencies(nb_players, capacity, c_lower, c_upper, nb_segments:int=2):
     prod_df = pd.DataFrame(columns=['producers', 'capacities', 'minFuelCosts', 'maxFuelCosts'])
     list_inefficiencies = []
     for i in range(nb_players+1):
@@ -58,8 +58,7 @@ def inefficiencies(nb_players, capacity, c_lower, c_upper):
         demand = prod_df['capacities'].sum()*0.55 
         if i < 3:
             continue
-        list_inefficiencies.append(search_worst_inefficiency(prod_df=prod_df, demand=demand))
+        list_inefficiencies.append(search_worst_inefficiency(prod_df=prod_df, demand=demand, nb_segments=nb_segments))
     return list_inefficiencies
 
-
-print(inefficiencies(5, 100, 10, 50))
+print(inefficiencies(5, 100, 10, 50, nb_segments=3))

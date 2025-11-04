@@ -19,3 +19,7 @@ $$
     a = b 
 \end{equation}
 $$
+
+
+Sanity check:
+Show the delta between the profit before opt and profit after (market clearing with the bids and marketclearing with the new bids)

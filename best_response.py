@@ -43,6 +43,18 @@ class BR():
             self.dict_profits[self.iteration] = mc.get_profits()
             self.dict_dispatch[self.iteration] = mc.get_dispatch()
 
+        if not self.convergenceReached():
+            self.iteration += 1
+            self.prices.append(sum(self.prices[-10:-1])/10)
+            profit_last_iter = [self.dict_profits[k] for k in range(self.iteration-1, self.iteration-10, -1)]
+            dispatch_last_iter = [self.dict_dispatch[k] for k in range(self.iteration-1, self.iteration-10, -1)]
+            alphas_last_iter = [self.dict_alphas[k] for k in range(self.iteration-1, self.iteration-10, -1)]
+            self.dict_profits[self.iteration] = np.array([sum(i) for i in zip(*profit_last_iter)])/10
+            self.dict_dispatch[self.iteration] = np.array([sum(i) for i in zip(*dispatch_last_iter)])/10
+            self.dict_alphas[self.iteration] = np.array([sum(i) for i in zip(*alphas_last_iter)])/10 #type: ignore
+            print(self.dict_alphas)
+
+
     def convergenceReached(self) -> bool:
         if self.iteration in [0, 1]:
             return False

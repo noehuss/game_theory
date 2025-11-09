@@ -16,7 +16,8 @@ class BR():
         self.prices = []
         self.dict_profits = {}
         self.dict_dispatch = {}
-
+        
+        self.increase_profit = {producer: [] for producer in self.prod_df['producers'].values.tolist()}
         self.estimated_profit = {producer: [] for producer in self.prod_df['producers'].values.tolist()}
 
         self.tol = tolerance
@@ -31,15 +32,22 @@ class BR():
         while self.iteration <= nb_iter and not self.convergenceReached():
             self.iteration += 1
             self.dict_alphas[self.iteration]=self.dict_alphas[self.iteration-1].copy()
-            for producer in self.prod_df['producers'].values.tolist():            
+            for index, producer in enumerate(self.prod_df['producers'].values.tolist()):            
                 print(f"Strategic producer {producer}")
+                # Calculation of the profit before strategic decision
+                mc = MarketClearing(bids=self.dict_alphas[self.iteration].copy(), 
+                                marginal_costs=self.marginal_costs, 
+                                demand=self.demand, 
+                                prod_df=self.prod_df)
+                profit_bf_strategic_decision = mc.get_profits()[index]
                 mpec = MPEClinearized(producer=producer, 
                                       alphas=self.dict_alphas[self.iteration].copy(), 
                                       marginal_costs=self.marginal_costs, 
                                       prod_df=self.prod_df, 
-                                      demand=self.demand)
+                                      demand=self.demand, tau=0.5)
                 self.dict_alphas[self.iteration] = mpec.update_alphas()
                 self.estimated_profit[producer].append(mpec.get_profit())
+                self.increase_profit[producer].append(mpec.get_profit()-profit_bf_strategic_decision)
 
             mc = MarketClearing(bids=self.dict_alphas[self.iteration].copy(), 
                                 marginal_costs=self.marginal_costs, 
@@ -111,3 +119,18 @@ class BR():
         plt.tight_layout()
         plt.show()
         
+    def plot_strategic_behaviour(self):
+        """
+        Plot expected profit before and after strategic decision
+        """
+        fig, ax = plt.subplots(figsize=(15, 5))
+
+        # Plot estimated profits
+        df = pd.DataFrame(self.increase_profit)
+        df.plot(ax=ax, marker='o')
+        ax.set_title('Variation of profit, before and after strategic decision')
+        ax.set_xlabel('Iteration')
+        ax.set_ylabel('$\Delta$ Profit')
+        ax.grid(True)
+        ax.legend(title='Producer')
+        plt.show()

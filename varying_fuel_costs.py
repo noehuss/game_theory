@@ -45,7 +45,7 @@ def search_worst_inefficiency(prod_df: pd.DataFrame, demand:int, nb_segments:int
     print(thetas)
     print(list_PoA)
     print(f"Share of instances that converged: {sum(list_convergence)/len(list_convergence):.2f}")
-    plt.hist(list_PoA, bins=10)
+    plt.hist(list_PoA, bins=20)
     plt.show()
 
     return max(list_PoA)

@@ -69,6 +69,12 @@ class BR():
             print(self.dict_alphas)
 
 
+    def get_equilibrium_bids(self) -> list:
+        return self.dict_alphas[self.iteration]
+    
+    def get_equilibrium_dispatch(self) -> list:
+        return self.dict_dispatch[self.iteration]
+    
     def convergenceReached(self) -> bool:
         if self.iteration in [0, 1] or self.iteration > self.nb_iter:
             return False

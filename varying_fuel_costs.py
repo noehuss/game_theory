@@ -36,9 +36,18 @@ def search_worst_inefficiency(prod_df: pd.DataFrame, demand:int, nb_segments:int
         br.run_BR(50)
         list_convergence.append(br.convergenceReached())
         # Market clearing
-        mc = MarketClearing(bids = theta, marginal_costs=theta, demand=demand, prod_df=prod_df)
+        q_eq = np.array(br.get_equilibrium_dispatch(), dtype=float)
+        theta_arr = np.array(theta, dtype=float)
+        SC_eq = float(np.dot(theta_arr, q_eq))
+        # Verify that the equilibrium dispatch meets the demand
+        mc_opt = MarketClearing(bids = theta, marginal_costs=theta, demand=demand, prod_df=prod_df)
+        q_opt = np.array(mc_opt.get_dispatch(), dtype=float)
+        SC_opt = float(np.dot(theta_arr, q_opt))    
         # PoA
-        PoA = br.get_price()/mc.get_price()
+        PoA = SC_eq / SC_opt
+        #mc = MarketClearing(bids = theta, marginal_costs=theta, demand=demand, prod_df=prod_df)
+        # PoA
+        #   PoA = br.get_price()/mc.get_price()
         print(PoA)
         list_PoA.append(PoA)
 

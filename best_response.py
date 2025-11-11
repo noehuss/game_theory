@@ -74,3 +74,9 @@ class BR():
     
     def get_price(self) -> float:
         return self.prices[-1]
+    
+    def get_equilibrium_bids(self) -> list:
+        return self.dict_alphas[self.iteration]
+    
+    def get_equilibrium_dispatch(self) -> list:
+        return self.dict_dispatch[self.iteration]

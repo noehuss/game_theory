@@ -95,13 +95,7 @@ class BR():
     def get_price(self) -> float:
         return self.prices[-1]
     
-<<<<<<< HEAD
-    def get_equilibrium_bids(self) -> list:
-        return self.dict_alphas[self.iteration]
-    
-    def get_equilibrium_dispatch(self) -> list:
-        return self.dict_dispatch[self.iteration]
-=======
+
     def plot_estimated_profits_evo(self) -> None:
         # Create a figure with two subplots side by side
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5))
@@ -147,4 +141,4 @@ class BR():
         ax.grid(True)
         ax.legend(title='Producer')
         plt.show()
->>>>>>> 518d00f3b495305ee0d44e86d3e1431e2d0fa1d9
+

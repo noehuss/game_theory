@@ -73,14 +73,7 @@ class MarketClearing:
             'capacities': self.prod_df['capacities'].to_list() #type: ignore
         }
         return pd.DataFrame(data)
-<<<<<<< HEAD
-
-    def get_social_cost(self) -> float:
-        q = [value(self.model.Pg[g]) for g in self.model.G] #type: ignore
-        return float(sum(float(self.marginal_costs[g]) * q[g] for g in self.model.G))
-=======
     
     def get_social_cost(self) -> float:
         q = [value(self.model.Pg[g]) for g in self.model.G] #type: ignore
         return float(sum(float(self.marginal_costs[g]) * q[g] for g in self.model.G))
->>>>>>> 518d00f3b495305ee0d44e86d3e1431e2d0fa1d9

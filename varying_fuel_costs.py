@@ -33,7 +33,7 @@ def search_worst_inefficiency(prod_df: pd.DataFrame, demand:int, nb_segments:int
     for theta in thetas:
         # Best response algorithm
         br = BR(bids_init=theta, marginal_costs=theta, demand=demand, prod_df=prod_df)
-        br.run_BR(50)
+        br.run_BR(100)
         list_convergence.append(br.convergenceReached())
         # Market clearing
         q_eq = np.array(br.get_equilibrium_dispatch(), dtype=float)

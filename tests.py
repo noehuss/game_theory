@@ -5,13 +5,13 @@ import utils
 from best_response import BR
 
 prod_df = pd.DataFrame({
-    'producers': ['P1', 'P2', 'P3'],
-    'capacities': [40, 90, 50],       
-    'minFuelCosts': [10, 30, 35],      
-    'maxFuelCosts': [15, 60, 70] 
+    'producers': ['P1', 'P2', 'P3', 'P4'],
+    'capacities': [40, 90, 50, 60],       
+    'minFuelCosts': [10, 30, 35, 55],      
+    'maxFuelCosts': [15, 60, 70, 90] 
 })
 
-demand = 130
+demand = 155
 strategic_producer = 'P1'
 # mc = MarketClearing(bids=prod_df['minFuelCosts'].to_list(), marginal_costs=prod_df['minFuelCosts'].to_list(), demand=demand, prod_df=prod_df)
 # print(mc.get_price())
@@ -30,7 +30,7 @@ strategic_producer = 'P1'
 # utils.plot_merit_order(mpec.get_results(), demand=demand, strategic_producer=strategic_producer, sp_profit=profit)
 
 
-br = BR(bids_init=[60, 10, 35], marginal_costs=[60, 10, 35], demand=demand, prod_df=prod_df, tolerance=0.03)
+br = BR(bids_init=[10, 30, 35, 55], marginal_costs=[10, 30, 35, 55], demand=demand, prod_df=prod_df, tolerance=0.03)
 br.run_BR(200)
 results_br, as_converged = br.get_results()
 price_br = br.get_price()

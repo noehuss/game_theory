@@ -136,7 +136,7 @@ class BR():
         df.plot(ax=ax, marker='o')
         ax.set_title('Variation of profit, before and after strategic decision')
         ax.set_xlabel('Iteration')
-        ax.set_ylabel('$\Delta$ Profit')
+        ax.set_ylabel('$\Delta$ Profit') #type: ignore
         ax.grid(True)
         ax.legend(title='Producer')
         plt.show()

@@ -1,5 +1,9 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
+# Colormap
+colors = ["#384E77","#8BBEB2","#E6F9AF","pink", "limegreen","black","orange","grey","maroon"]  # R -> G -> B
+
 
 def plot_merit_order(df:pd.DataFrame, demand:int, strategic_producer=None, sp_profit=None, ax_fig=None):
     """
@@ -94,19 +98,21 @@ def plot_bids_evolution(df:pd.DataFrame, dict_alphas: dict, single_graph=True):
     df_alphas =pd.DataFrame(dict_alphas)
     if single_graph:
         for i,producers in enumerate(df['producers']):
-            plt.plot(df_alphas.columns, df_alphas.iloc[i], label =f'Bids of {producers}', marker ='x', color=df.loc[i, 'color'])
+            plt.plot(df_alphas.columns, df_alphas.iloc[i], label =f'Bids of {producers}', marker ='o', color=df.loc[i, 'color'])
             plt.axhline(df.at[i,'minFuelCosts'], color=df.loc[i, 'color'], linestyle='--', label=f'Truthful cost \nof producer {producers}')
             plt.xlabel('Number of iteration')
             plt.ylabel('Prices €/MWh')
+            plt.grid(True, alpha=0.6, linestyle='--')
             plt.legend(loc='best')
         plt.show()
     else:
         fig, axes = plt.subplots(1, len(df['producers']), figsize=(15, 5))
         for i,producers in enumerate(df['producers']):
-            axes[i].plot(df_alphas.columns, df_alphas.iloc[i], label =f'Bids of {producers}', marker ='x', color=df.loc[i, 'color'])
+            axes[i].plot(df_alphas.columns, df_alphas.iloc[i], label =f'Bids of {producers}', marker ='o', color=df.loc[i, 'color'])
             axes[i].axhline(df.loc[i,'minFuelCosts'], color=df.loc[i, 'color'], linestyle='--', label=f'Truthful cost \nof producer {producers}')
             axes[i].set_xlabel('Number of iteration')
             axes[i].set_ylabel('Prices €/MWh')
+            axes[i].grid(True, alpha=0.6, linestyle='--')
             axes[i].legend(loc='best')
         plt.tight_layout()
         plt.show()

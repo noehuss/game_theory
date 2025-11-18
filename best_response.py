@@ -3,6 +3,7 @@ from market_clearing import MarketClearing
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import utils as ui
 
 class BR():
     def __init__(self, bids_init: list, marginal_costs:list, demand:int, prod_df:pd.DataFrame, tolerance:float=0.02):
@@ -13,6 +14,7 @@ class BR():
 
         self.iteration = 0
         self.dict_alphas = {0: bids_init}
+        self.dict_profits_mpec = {0: [0.0 for producer in self.prod_df['producers'].values.tolist()] }
         self.prices = []
         self.dict_profits = {}
         self.dict_dispatch = {}
@@ -22,7 +24,7 @@ class BR():
 
         self.tol = tolerance
 
-    def run_BR(self, nb_iter:int=10):
+    def run_BR(self, nb_iter:int=10, tau_alphas=1):
         """
         Run the best response algorithm. Return a dataframe with 
         the converged equilibrium dispatch and a boolean to indicate if 
@@ -32,6 +34,7 @@ class BR():
         while self.iteration <= nb_iter and not self.convergenceReached():
             self.iteration += 1
             self.dict_alphas[self.iteration]=self.dict_alphas[self.iteration-1].copy()
+            self.dict_profits_mpec[self.iteration] = self.dict_profits_mpec[self.iteration-1].copy()
             for index, producer in enumerate(self.prod_df['producers'].values.tolist()):            
                 print(f"Strategic producer {producer}")
                 # Calculation of the profit before strategic decision
@@ -44,10 +47,12 @@ class BR():
                                       alphas=self.dict_alphas[self.iteration].copy(), 
                                       marginal_costs=self.marginal_costs, 
                                       prod_df=self.prod_df, 
-                                      demand=self.demand, tau=0.5)
+                                      demand=self.demand, tau=tau_alphas)
                 self.dict_alphas[self.iteration] = mpec.update_alphas()
+                self.dict_profits_mpec[self.iteration][index] = mpec.get_profit()
                 self.estimated_profit[producer].append(mpec.get_profit())
-                self.increase_profit[producer].append(mpec.get_profit()-profit_bf_strategic_decision)
+                profit = mpec.get_profit()
+                self.increase_profit[producer].append((mpec.get_profit()-profit_bf_strategic_decision)/profit if profit > 0 else 0) #%
 
             mc = MarketClearing(bids=self.dict_alphas[self.iteration].copy(), 
                                 marginal_costs=self.marginal_costs, 
@@ -78,9 +83,14 @@ class BR():
     def convergenceReached(self) -> bool:
         if self.iteration in [0, 1] or self.iteration > self.nb_iter:
             return False
-        return np.allclose(np.array(self.dict_profits[self.iteration]), 
-                           np.array(self.dict_profits[self.iteration-1]), 
+        convergence_profit =  np.allclose(np.array(self.dict_profits_mpec[self.iteration]), 
+                           np.array(self.dict_profits_mpec[self.iteration-1]), 
                            rtol=self.tol)
+        feasible_equilibrium = np.allclose(np.array(self.dict_profits[self.iteration]), 
+                           np.array(self.dict_profits_mpec[self.iteration]), 
+                           rtol=self.tol)
+        return convergence_profit and feasible_equilibrium
+
     
     def get_results(self) -> tuple[pd.DataFrame, bool]:
         data = {
@@ -101,11 +111,11 @@ class BR():
 
         # Plot estimated profits
         df_estimated = pd.DataFrame(self.estimated_profit)
-        df_estimated.plot(ax=ax1)
+        df_estimated.plot(ax=ax1, color=ui.colors, marker='o')
         ax1.set_title('Estimated Profits Evolution')
         ax1.set_xlabel('Iteration')
         ax1.set_ylabel('Profit')
-        ax1.grid(True)
+        ax1.grid(True, alpha=0.6, linestyle='--')
         ax1.legend(title='Producer')
 
         # Create DataFrame for market clearing profits
@@ -115,11 +125,11 @@ class BR():
                 market_profits[producer].append(self.dict_profits[i][idx])
 
         df_market = pd.DataFrame(market_profits)
-        df_market.plot(ax=ax2)
+        df_market.plot(ax=ax2, color=ui.colors, marker='o')
         ax2.set_title('Market Clearing Profits Evolution')
         ax2.set_xlabel('Iteration')
         ax2.set_ylabel('Profit')
-        ax2.grid(True)
+        ax2.grid(True, alpha=0.6, linestyle='--')
         ax2.legend(title='Producer')
 
         plt.tight_layout()
@@ -133,10 +143,10 @@ class BR():
 
         # Plot estimated profits
         df = pd.DataFrame(self.increase_profit)
-        df.plot(ax=ax, marker='o')
+        df.plot(ax=ax, marker='o', color=ui.colors)
         ax.set_title('Variation of profit, before and after strategic decision')
         ax.set_xlabel('Iteration')
         ax.set_ylabel('$\Delta$ Profit') #type: ignore
-        ax.grid(True)
+        ax.grid(True, alpha=0.6, linestyle='--')
         ax.legend(title='Producer')
         plt.show()

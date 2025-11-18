@@ -8,7 +8,7 @@ prod_df = pd.DataFrame({
     'producers': ['P1', 'P2', 'P3', 'P4'],
     'capacities': [40, 90, 50, 60],       
     'minFuelCosts': [10, 30, 35, 55],      
-    'maxFuelCosts': [15, 60, 70, 90] 
+    'maxFuelCosts': [15, 60, 70, 90],
 })
 
 demand = 155
@@ -30,7 +30,7 @@ strategic_producer = 'P1'
 # utils.plot_merit_order(mpec.get_results(), demand=demand, strategic_producer=strategic_producer, sp_profit=profit)
 
 
-br = BR(bids_init=[10, 30, 35, 55], marginal_costs=[10, 30, 35, 55], demand=demand, prod_df=prod_df, tolerance=0.03)
+br = BR(bids_init=[10, 30, 35, 55], marginal_costs=[10, 30, 35, 55], demand=demand, prod_df=prod_df, tolerance=0.01)
 br.run_BR(200)
 results_br, as_converged = br.get_results()
 price_br = br.get_price()
@@ -42,7 +42,7 @@ br.plot_strategic_behaviour()
 # results_mc = mc.get_results()
 # price_mc = mc.get_price()
 # #print(br.dict_alphas)
-# print(utils.plot_bids_evolution(prod_df, br.dict_alphas, single_graph=False))
+print(utils.plot_bids_evolution(prod_df, br.dict_alphas, single_graph=False))
 
 # utils.plot_dispatch_br_mc(results_mc=results_mc, results_br=results_br, demand=demand)
 # print(f"Inefficiency of the equilibrium: {price_br}/{price_mc} = {price_br/price_mc:.2f}")

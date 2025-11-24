@@ -1,4 +1,4 @@
-from strategic_behavior import MPEClinearized, MPEC
+from strategic_behavior_q5 import MPEClinearized, MPEC
 from market_clearing import MarketClearing
 import pandas as pd
 import numpy as np

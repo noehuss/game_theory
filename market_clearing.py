@@ -27,7 +27,7 @@ class MarketClearing:
         self.model.G = Set(initialize = self.prod_df.index.tolist())
 
     def parameters(self):
-        self.model.capacities = Param(self.model.G, initialize = self.prod_df['capacities'].tolist())
+        self.model.Pmax = Param(self.model.G, initialize = self.prod_df['Pmax'].tolist())
         self.model.bids = Param(self.model.G, initialize = self.bids)
 
     def variables(self):
@@ -35,7 +35,7 @@ class MarketClearing:
 
     def constraints(self):
         def rule_prod(model, g):
-            return model.Pg[g] <= model.capacities[g]
+            return model.Pg[g] <= model.Pmax[g]
         self.model.prod_constraint = Constraint(self.model.G, rule= rule_prod)
 
         self.model.eq_constraint = Constraint(rule = sum(self.model.Pg[g] for g in self.model.G) == self.demand) # type: ignore

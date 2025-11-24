@@ -3,8 +3,9 @@ import pandas as pd
 import numpy as np
 
 def update_prof_df(prod_df:pd.DataFrame, pg:pd.Series):
-    prod_df['Pmax'] = np.min(pg + prod_df['ramp_constraints'].to_numpy(), prod_df['capacities'].to_numpy())
-    prod_df['Pmin'] = np.max(pg - prod_df['ramp_constraints'].to_numpy(), 0)
+    df = prod_df.set_index('producers')
+    prod_df['Pmax'] = pd.concat([df['ramp_constraints']+pg, df['capacities']], axis=1).min(axis=1).to_list()
+    prod_df['Pmin'] = 0 #pd.concat([-df['ramp_constraints']+pg, pg*0], axis=1).max(axis=1).to_list()
     return prod_df
 
 prod_df = pd.DataFrame({
@@ -16,13 +17,22 @@ prod_df = pd.DataFrame({
     'ramp_constraints': [10, 10, 10, 10] #to change
 })
 
-marginal_costs = prod_df['marginal_cost'].to_list()
-net_loads = [155]*24
+marginal_costs = prod_df['marginal_costs'].to_list()
+net_loads = 155+0*np.random.rand(3)
+print(net_loads)
+results_prod = pd.DataFrame()
+results_prod.index = prod_df['producers'] #type: ignore
 
 for (hour, net_load) in enumerate(net_loads):
     br = BR(bids_init=marginal_costs, marginal_costs=marginal_costs, demand=net_load, prod_df=prod_df)
+    br.run_BR(nb_iter=200, tau_alphas=1)
     results, convergence = br.get_results()
-    prod_df = update_prof_df(prod_df=prod_df, pg=results['production'])
+    prod_df = update_prof_df(prod_df=prod_df, pg=results.set_index('producer')['production'])
+
+    # Store prod results
+    results_prod[hour] = results.set_index('producer')['production']
 
     # Calculation Inefficiency
-    
+print(net_loads)
+print(results_prod)
+print(prod_df)

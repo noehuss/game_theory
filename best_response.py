@@ -15,7 +15,7 @@ class BR():
         self.iteration = 0
         self.dict_alphas = {0: bids_init}
         self.dict_profits_mpec = {0: [0.0 for producer in self.prod_df['producers'].values.tolist()] }
-        self.prices = []
+        self.prices = [0]
         self.dict_profits = {}
         self.dict_dispatch = {}
         
@@ -52,7 +52,7 @@ class BR():
                 self.dict_profits_mpec[self.iteration][index] = mpec.get_profit()
                 self.estimated_profit[producer].append(mpec.get_profit())
                 profit = mpec.get_profit()
-                self.increase_profit[producer].append((mpec.get_profit()-profit_bf_strategic_decision)/profit if profit > 0 else 0) #%
+                self.increase_profit[producer].append(100*(mpec.get_profit()-profit_bf_strategic_decision)/profit if profit > 0 else 0) #%
 
             mc = MarketClearing(bids=self.dict_alphas[self.iteration].copy(), 
                                 marginal_costs=self.marginal_costs, 
@@ -127,7 +127,7 @@ class BR():
         df_market = pd.DataFrame(market_profits)
         df_market.plot(ax=ax2, color=ui.colors, marker='o')
         ax2.set_title('Market Clearing Profits Evolution')
-        ax2.set_xlabel('Iteration')
+        ax2.set_xlabel('Number of iteration')
         ax2.set_ylabel('Profit')
         ax2.grid(True, alpha=0.6, linestyle='--')
         ax2.legend(title='Producer')
@@ -145,8 +145,8 @@ class BR():
         df = pd.DataFrame(self.increase_profit)
         df.plot(ax=ax, marker='o', color=ui.colors)
         ax.set_title('Variation of profit, before and after strategic decision')
-        ax.set_xlabel('Iteration')
-        ax.set_ylabel('$\Delta$ Profit') #type: ignore
+        ax.set_xlabel('Number of iteration')
+        ax.set_ylabel('$\Delta$ Profit (%)') #type: ignore
         ax.grid(True, alpha=0.6, linestyle='--')
         ax.legend(title='Producer')
         plt.show()

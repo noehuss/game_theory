@@ -92,18 +92,21 @@ def plot_merit_order(df:pd.DataFrame, demand:int, strategic_producer=None, sp_pr
     else:
         return ax
 
-def plot_bids_evolution(df:pd.DataFrame, dict_alphas: dict, single_graph=True):
+def plot_bids_evolution(df:pd.DataFrame, dict_alphas: dict, single_graph=True, market_prices=None):
     colors = ["#384E77","#8BBEB2","#E6F9AF","pink","limegreen","black","orange","grey","maroon"]
     df["color"] = pd.Series(colors[:len(df)])
     df_alphas =pd.DataFrame(dict_alphas)
     if single_graph:
+        fig, ax = plt.subplots(figsize=(16,10))
         for i,producers in enumerate(df['producers']):
-            plt.plot(df_alphas.columns, df_alphas.iloc[i], label =f'Bids of {producers}', marker ='o', color=df.loc[i, 'color'])
-            plt.axhline(df.at[i,'minFuelCosts'], color=df.loc[i, 'color'], linestyle='--', label=f'Truthful cost \nof producer {producers}')
-            plt.xlabel('Number of iteration')
-            plt.ylabel('Prices €/MWh')
-            plt.grid(True, alpha=0.6, linestyle='--')
-            plt.legend(loc='best')
+            ax.plot(df_alphas.columns, df_alphas.iloc[i], label =f'Bids of {producers}', marker ='o', color=df.loc[i, 'color'])
+            ax.axhline(df.at[i,'minFuelCosts'], color=df.loc[i, 'color'], linestyle='--', label=f'Truthful cost \nof producer {producers}')
+            ax.set_xlabel('Number of iteration')
+            ax.set_ylabel('Prices €/MWh')
+            ax.grid(True, alpha=0.6, linestyle='--')
+            ax.legend(loc='best')
+        if market_prices is not None:
+            ax.plot(df_alphas.columns.to_list()[1:], market_prices[1:], marker='x', linestyle='None', color='black', label='Market Price', markersize=12)
         plt.show()
     else:
         fig, axes = plt.subplots(1, len(df['producers']), figsize=(15, 5))

@@ -6,10 +6,12 @@ from market_clearing import MarketClearing
 import matplotlib.pyplot as plt
 
 prod_df = pd.DataFrame({
-    'producers': ['P1', 'P2', 'P3'],
-    'capacities': [100, 40, 40],       
-    'minFuelCosts': [10, 30, 35],      
-    'maxFuelCosts': [15, 60, 70] 
+    'producers': ['P1', 'P2', 'P3', 'P4'],
+    'capacities': [40, 90, 50, 60], 
+    'Pmax': [40, 90, 50, 60],       
+    'Pmin': [10, 0, 30, 20],      
+    'minFuelCosts': [10, 30, 35, 55],      
+    'maxFuelCosts': [15, 60, 70, 90]
 })
 
 demand = 120

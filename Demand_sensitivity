@@ -1,0 +1,210 @@
+
+
+import numpy as np
+import pandas as pd
+from itertools import product
+import matplotlib.pyplot as plt
+
+from best_response import BR
+from market_clearing import MarketClearing
+
+
+# ---------- Helper: run PoA study for ONE demand level ----------
+
+def poa_for_one_demand(prod_df: pd.DataFrame,
+                       demand: float,
+                       nb_segments: int = 2,
+                       br_iter: int = 50,
+                       br_tol: float = 0.02):
+    """
+    Compute PoA statistics for a SINGLE demand level.
+
+    Returns a dict with:
+        {
+          "demand": demand,
+          "thetas": list of theta vectors,
+          "PoA_list": list of PoA(theta),
+          "worst_PoA": max PoA,
+          "avg_PoA": average PoA,
+          "conv_share": fraction of BR runs that converged
+        }
+    """
+
+    nb_producers = len(prod_df['producers'])
+
+    # Build discrete grid of marginal costs (same idea as search_worst_inefficiency)
+    segments = []
+    thetas = []
+    for i in range(nb_producers):
+        seg = np.linspace(prod_df['minFuelCosts'][i],
+                          prod_df['maxFuelCosts'][i],
+                          num=nb_segments,
+                          dtype=int)
+        segments.append(list(seg))
+
+    for theta in product(*segments):
+        thetas.append(list(theta))
+
+    PoA_list = []
+    convergence_flags = []
+
+    for theta in thetas:
+        theta_arr = np.array(theta, dtype=float)
+
+        # ---- 1) Best response equilibrium with strategic behavior ----
+        br = BR(bids_init=theta, marginal_costs=theta,
+                demand=demand, prod_df=prod_df, tolerance=br_tol)
+        br.run_BR(nb_iter=br_iter)
+
+        convergence_flags.append(br.convergenceReached())
+
+        q_eq = np.array(br.get_equilibrium_dispatch(), dtype=float)
+        SC_eq = float(theta_arr @ q_eq)  # equilibrium social cost
+
+        # ---- 2) Social optimum at true costs (no strategic markups) ----
+        mc_opt = MarketClearing(bids=theta,  # truthful bids = costs
+                                marginal_costs=theta,
+                                demand=demand,
+                                prod_df=prod_df)
+        q_opt = np.array(mc_opt.get_dispatch(), dtype=float)
+        SC_opt = float(theta_arr @ q_opt)     # optimal social cost
+
+        # ---- 3) Price of Anarchy in COST ----
+        PoA = SC_eq / SC_opt
+        PoA_list.append(PoA)
+
+    PoA_arr = np.array(PoA_list, dtype=float)
+
+    return dict(
+        demand=demand,
+        thetas=thetas,
+        PoA_list=PoA_list,
+        worst_PoA=float(np.max(PoA_arr)),
+        avg_PoA=float(np.mean(PoA_arr)),
+        conv_share=float(sum(convergence_flags) / len(convergence_flags)),
+    )
+
+
+# ---------- Main sensitivity driver ----------
+
+def demand_sensitivity(prod_df: pd.DataFrame,
+                       demands: list,
+                       nb_segments: int = 2,
+                       br_iter: int = 50,
+                       br_tol: float = 0.02):
+    """
+    Run PoA study for several demand levels.
+
+    Parameters
+    ----------
+    prod_df : DataFrame with columns
+              ['producers', 'capacities', 'minFuelCosts', 'maxFuelCosts']
+    demands : list of demand levels to test (e.g. [D_low, D_mid, D_peak])
+    nb_segments : number of points in each [minFuel, maxFuel] range
+    br_iter : max iterations of the BR algorithm
+    br_tol : BR convergence tolerance
+
+    Returns
+    -------
+    results : list of dicts (one per demand), exactly the output of
+              `poa_for_one_demand`.
+    """
+
+    results = []
+    for D in demands:
+        print(f"\n=== Demand level D = {D} ===")
+        res = poa_for_one_demand(prod_df, D,
+                                 nb_segments=nb_segments,
+                                 br_iter=br_iter,
+                                 br_tol=br_tol)
+        print(f"  worst PoA   = {res['worst_PoA']:.4f}")
+        print(f"  average PoA = {res['avg_PoA']:.4f}")
+        print(f"  conv share  = {res['conv_share']:.2f}")
+        results.append(res)
+
+    return results
+
+
+# ---------- Plotting utilities ----------
+
+def plot_poa_vs_demand(results, save_path: str | None = None):
+    """
+    Plot worst and average PoA as a function of demand.
+    """
+    demands = [r["demand"] for r in results]
+    worst = [r["worst_PoA"] for r in results]
+    avg   = [r["avg_PoA"]   for r in results]
+
+    plt.figure(figsize=(7, 4))
+    plt.plot(demands, worst, marker="o", label="Worst PoA")
+    plt.plot(demands, avg, marker="s", label="Average PoA")
+    plt.axhline(1.0, color="grey", linestyle="--", linewidth=1, label="PoA = 1")
+    plt.xlabel("Demand D")
+    plt.ylabel("PoA (cost-based)")
+    plt.title("Inefficiency of equilibrium vs demand level")
+    plt.grid(True, linestyle="--", alpha=0.5)
+    plt.legend()
+    plt.tight_layout()
+    if save_path is not None:
+        plt.savefig(save_path, dpi=150)
+    plt.show()
+
+
+def plot_poa_histograms(results, save_prefix: str | None = None):
+    """
+    One histogram per demand level (separate figures).
+    """
+    for res in results:
+        D = res["demand"]
+        poa_vals = res["PoA_list"]
+
+        plt.figure(figsize=(6, 4))
+        plt.hist(poa_vals, bins=10, edgecolor="k")
+        plt.xlabel("PoA (SC_eq / SC_opt)")
+        plt.ylabel("Count")
+        plt.title(f"PoA distribution for demand D = {D}")
+        plt.grid(True, linestyle="--", alpha=0.5)
+        plt.tight_layout()
+        if save_prefix is not None:
+            plt.savefig(f"{save_prefix}_D{D}.png", dpi=150)
+        plt.show()
+
+
+# ---------- Example usage (run this file as a script) ----------
+
+if __name__ == "__main__":
+    # Example prod_df — you can also import your own prod_df instead
+    prod_df = pd.DataFrame({
+        'producers': ['P1', 'P2', 'P3'],
+        'capacities': [100, 40, 40],
+        'minFuelCosts': [10, 30, 35],
+        'maxFuelCosts': [15, 60, 70]
+    })
+
+    total_cap = prod_df['capacities'].sum()
+
+    # Define "low / medium / peak" demand levels
+    D_1   = 0.1 * total_cap
+    D_2   = 0.2 * total_cap
+    D_3   = 0.3 * total_cap
+    D_4   = 0.4 * total_cap
+    D_5   = 0.5 * total_cap
+    D_6   = 0.6 * total_cap
+    D_7   = 0.7 * total_cap
+    D_8   = 0.8 * total_cap
+    D_9   = 0.9 * total_cap
+
+    demands = [D_1, D_2, D_3, D_4, D_5, D_6, D_7, D_8, D_9]
+
+    # Run sensitivity study
+    results = demand_sensitivity(
+        prod_df,
+        demands=demands,
+        nb_segments=3,   # 3^3 = 27 theta combos; increase carefully
+        br_iter=50,
+        br_tol=0.02
+    )
+
+    # Plots
+    plot_poa_vs_demand(results)
+    plot_poa_histograms(results)

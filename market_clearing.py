@@ -28,15 +28,19 @@ class MarketClearing:
 
     def parameters(self):
         self.model.Pmax = Param(self.model.G, initialize = self.prod_df['Pmax'].tolist())
+        self.model.Pmin = Param(self.model.G, initialize = self.prod_df['Pmin'].tolist())
         self.model.bids = Param(self.model.G, initialize = self.bids)
 
     def variables(self):
         self.model.Pg = Var(self.model.G, domain=NonNegativeReals)
 
     def constraints(self):
-        def rule_prod(model, g):
+        def rule_prod_max(model, g):
             return model.Pg[g] <= model.Pmax[g]
-        self.model.prod_constraint = Constraint(self.model.G, rule= rule_prod)
+        self.model.prod_constraint_max = Constraint(self.model.G, rule = rule_prod_max)
+        def rule_prod_min(model, g):
+            return model.Pg[g] >= model.Pmin[g]
+        self.model.prod_constraint_min = Constraint(self.model.G, rule = rule_prod_min )
 
         self.model.eq_constraint = Constraint(rule = sum(self.model.Pg[g] for g in self.model.G) == self.demand) # type: ignore
 

@@ -100,7 +100,7 @@ def plot_bids_evolution(df:pd.DataFrame, dict_alphas: dict, single_graph=True, m
         fig, ax = plt.subplots(figsize=(16,10))
         for i,producers in enumerate(df['producers']):
             ax.plot(df_alphas.columns, df_alphas.iloc[i], label =f'Bids of {producers}', marker ='o', color=df.loc[i, 'color'])
-            ax.axhline(df.at[i,'minFuelCosts'], color=df.loc[i, 'color'], linestyle='--', label=f'Truthful cost \nof producer {producers}')
+            ax.axhline(df.at[i,'marginal_costs'], color=df.loc[i, 'color'], linestyle='--', label=f'Truthful cost \nof producer {producers}')
             ax.set_xlabel('Number of iteration')
             ax.set_ylabel('Prices €/MWh')
             ax.grid(True, alpha=0.6, linestyle='--')

@@ -5,16 +5,28 @@ from best_response import BR
 from market_clearing import MarketClearing
 import matplotlib.pyplot as plt
 
+
+# prod_df = pd.DataFrame({
+#     'producers': ['P1', 'P2', 'P3', 'P4'],
+#     'capacities': [40, 90, 50, 60], 
+#     'Pmax': [40, 90, 50, 60],       
+#     'Pmin': [10, 0, 30, 20],      
+#     'minFuelCosts': [10, 30, 35, 55],      
+#     'maxFuelCosts': [15, 60, 70, 90]
+# })
+
 prod_df = pd.DataFrame({
-    'producers': ['P1', 'P2', 'P3'],
-    'capacities': [100, 40, 40],       
-    'minFuelCosts': [10, 30, 35],      
-    'maxFuelCosts': [15, 60, 70] 
+    'producers': ['P1', 'P2', 'P3', 'P4'],
+    'capacities': [40, 90, 50, 60], 
+    'Pmax': [40, 90, 50, 60],       
+    'Pmin': [0, 0, 0, 0],      
+    'minFuelCosts': [10, 30, 35, 55],      
+    'maxFuelCosts': [15, 60, 70, 90]
 })
 
-demand = 120
+demand = 155
 
-def search_worst_inefficiency(prod_df: pd.DataFrame, demand:int, nb_segments:int=2) -> float:
+def search_worst_inefficiency(prod_df: pd.DataFrame, demand:int, nb_segments:int=3) -> float:
     """
     Iterate over a bounded discrete grid of marginal costs. 
     """
@@ -59,15 +71,19 @@ def search_worst_inefficiency(prod_df: pd.DataFrame, demand:int, nb_segments:int
 
     return max(list_PoA)
 
-def inefficiencies(nb_players, capacity, c_lower, c_upper, nb_segments:int=2):
-    prod_df = pd.DataFrame(columns=['producers', 'capacities', 'minFuelCosts', 'maxFuelCosts'])
-    list_inefficiencies = []
-    for i in range(nb_players+1):
-        prod_df = pd.concat([pd.DataFrame([[f'P{i}', capacity, c_lower, c_upper]], columns=prod_df.columns),  prod_df], ignore_index=True)
-        demand = prod_df['capacities'].sum()*0.55 
-        if i < 3:
-            continue
-        list_inefficiencies.append(search_worst_inefficiency(prod_df=prod_df, demand=demand, nb_segments=nb_segments))
-    return list_inefficiencies
 
-print(inefficiencies(5, 100, 10, 50, nb_segments=3))
+if __name__ == "__main__":
+    worst_inefficiency = search_worst_inefficiency(prod_df=prod_df, demand=demand, nb_segments=3)
+    print(f"Worst inefficiency (PoA) found: {worst_inefficiency:.2f}")
+# def inefficiencies(nb_players, capacity, c_lower, c_upper, nb_segments:int=2):
+#     prod_df = pd.DataFrame(columns=['producers', 'capacities', 'minFuelCosts', 'maxFuelCosts'])
+#     list_inefficiencies = []
+#     for i in range(nb_players+1):
+#         prod_df = pd.concat([pd.DataFrame([[f'P{i}', capacity, c_lower, c_upper]], columns=prod_df.columns),  prod_df], ignore_index=True)
+#         demand = prod_df['capacities'].sum()*0.55 
+#         if i < 3:
+#             continue
+#         list_inefficiencies.append(search_worst_inefficiency(prod_df=prod_df, demand=demand, nb_segments=nb_segments))
+#     return list_inefficiencies
+
+# print(inefficiencies(5, 100, 10, 50, nb_segments=3))

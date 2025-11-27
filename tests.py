@@ -10,10 +10,10 @@ prod_df = pd.DataFrame({
     'Pmax': [40, 90, 50, 60],       
     'Pmin': [0, 0, 0, 0],      
     'marginal_costs': [10, 30, 35, 55],
-    'ramp_constraints': [10, 10, 10, 60] #to change
+    'ramp': [10, 10, 10, 60] #to change
 })
 
-demand = [155, 155, 155]
+demand = [155, 175, 155]
 strategic_producer = 'P1'
 mc = MarketClearingMT(bids=[prod_df['marginal_costs'].to_list()]*3, marginal_costs=prod_df['marginal_costs'].to_list(), demand=demand, prod_df=prod_df)
 print(mc.get_price(1))

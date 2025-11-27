@@ -20,6 +20,7 @@ class MPEC:
         self.upper_bid = upper_bid
         self.lower_bid = lower_bid
         self.prod_df = prod_df
+        self.T = len(demand)-1
         self.indexes()
         self.parameters()
         self.variables()
@@ -31,7 +32,7 @@ class MPEC:
         self.model.Omega = Set(initialize = self.prod_df[self.prod_df['producers']==self.producer].index.tolist())
         self.model.OmegaBar = Set(initialize = self.prod_df[self.prod_df['producers']!=self.producer].index.tolist())
         self.model.I = Set(initialize = self.prod_df.index.tolist())
-        self.model.T = RangeSet(0, len(self.demand)-1) #0 to T-1
+        self.model.T = RangeSet(0, self.T) #0 to T-1
 
     def parameters(self):
         self.model.Demand = Param(self.model.T, initialize = self.demand)
@@ -62,13 +63,27 @@ class MPEC:
         # Alphas
         self.model.y_diff = Var(self.model.T, self.model.OmegaBar, domain=Binary)
 
+        # Ramp constraints
+        self.model.theta_max = Var(self.model.T, self.model.I, domain=NonNegativeReals)
+        self.model.theta_min = Var(self.model.T, self.model.I, domain=NonNegativeReals)
+
+        self.model.x_max = Var(self.model.T, self.model.I, domain = Binary)
+        self.model.x_min = Var(self.model.T, self.model.I, domain = Binary) 
+
     def constraints(self):
         # Price and power balance
         def rule_price_balance(model, t, i):
-            if i in model.Omega:
-                return model.alpha_g[t, i] + model.mu_max[t, i] - model.mu_min[t, i] - model.price[t] == 0
+            if t == 0:
+                expr_theta = 0
+            elif t == self.T:
+                expr_theta = self.model.theta_max[t, i] - self.model.theta_min[t, i]
             else:
-                return model.alphas[t, i] + model.mu_max[t, i] - model.mu_min[t, i] - model.price[t] == 0
+                expr_theta = self.model.theta_max[t, i] - self.model.theta_min[t, i] - self.model.theta_min[t+1, i] + self.model.theta_min[t+1, i]
+            expr = model.mu_max[t, i] - model.mu_min[t, i] - model.price[t] + expr_theta
+            if i in model.Omega:
+                return model.alpha_g[t, i] + expr == 0
+            else:
+                return model.alphas[t, i] + expr == 0
         self.model.constraint_price_balance = Constraint(self.model.T, self.model.I, rule=rule_price_balance)
 
         def rule_eq_demand(model, t):
@@ -110,6 +125,38 @@ class MPEC:
             return model.mu_max[t, i] <= self.bigM*(1-model.z_max[t, i])
         self.model.constraint_mu_max = Constraint(self.model.T, self.model.I, rule=rule_mu_max)
 
+        def rule_ramp_down_min(model, t, i):
+            if t == 0:
+                return Constraint.Skip
+            return model.Pg[t, i] - model.Pg[t-1, i] + model.Ramp[i] >= 0
+        self.model.constraint_ramp_down_min = Constraint(self.model.T, self.model.I, rule =rule_ramp_down_min)
+
+        def rule_ramp_down_max(model, t, i):
+            if t == 0:
+                return Constraint.Skip
+            return model.Pg[t, i] - model.Pg[t-1, i] + model.Ramp[i] <= self.bigM*model.x_min[t, i]
+        self.model.constraint_ramp_down_max = Constraint(self.model.T, self.model.I, rule =rule_ramp_down_max)
+
+        def rule_ramp_up_min(model, t, i):
+            if t == 0:
+                return Constraint.Skip
+            return - model.Pg[t, i] + model.Pg[t-1, i] + model.Ramp[i] >= 0
+        self.model.constraint_ramp_up_min = Constraint(self.model.T, self.model.I, rule=rule_ramp_up_min)
+        
+        def rule_ramp_up_max(model, t, i):
+            if t==0:
+                return Constraint.Skip
+            return - model.Pg[t, i] + model.Pg[t-1, i] + model.Ramp[i] <= self.bigM*model.x_max[t, i]
+        self.model.constraint_ramp_up_max = Constraint(self.model.T, self.model.I, rule=rule_ramp_up_max)
+
+        def rule_theta_min(model, t, i):
+            return model.theta_min[t, i]<= self.bigM*(1-model.x_min[t, i])
+        self.model.constraint_theta_min_binary = Constraint(self.model.T, self.model.I, rule= rule_theta_min)
+
+        def rule_theta_max(model, t, i):
+            return model.theta_max[t, i]<= self.bigM*(1-model.x_max[t, i])
+        self.model.constraint_theta_max_binary = Constraint(self.model.T, self.model.I, rule= rule_theta_max)
+
     def objective_function(self):
         # objective function
         self.model.obj = Objective(expr=sum(sum([-self.model.price[t]*self.model.Pg[t, i] + self.marginal_costs[i]*self.model.Pg[t, i] for i in self.model.Omega]) for t in self.model.T), sense=minimize) #type: ignore
@@ -136,8 +183,9 @@ class MPEC:
         return value(self.model.price[t])
     
     def update_alphas(self):
-        for i in self.prod_df[self.prod_df['producers']==self.producer].index.tolist():
-            self.alphas[i] = [value(self.model.alpha_g[t, i]) for t in self.model.T] #type: ignore
+        for t in self.model.T:
+            for i in self.prod_df[self.prod_df['producers']==self.producer].index.tolist():
+                self.alphas[t][i] = value(self.model.alpha_g[t, i]) #type: ignore
         return self.alphas
     
     def get_results(self, t) -> pd.DataFrame:
@@ -150,6 +198,7 @@ class MPEC:
             'Pmax': [value(self.model.Pmax[i]) for i in self.model.I], #type: ignore
             'Pmin': [value(self.model.Pmin[i]) for i in self.model.I] #type: ignore
         }
+        print(data)
 
         return pd.DataFrame(data)
 

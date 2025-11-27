@@ -31,6 +31,7 @@ class MarketClearingMT:
         self.model.Demand = Param(self.model.T, initialize = self.demand)
         self.model.Pmax = Param(self.model.G, initialize = self.prod_df['Pmax'].tolist())
         self.model.Pmin = Param( self.model.G, initialize = self.prod_df['Pmin'].tolist())
+        self.model.Ramp = Param( self.model.G, initialize = self.prod_df['ramp'].tolist())
         def bids_init(model, t, g):
             return self.bids[t][g]
         self.model.bids = Param(self.model.T, self.model.G, initialize = bids_init) # warn
@@ -49,6 +50,18 @@ class MarketClearingMT:
         def rule_demand(model, t):
             return sum(model.Pg[t, g] for g in model.G) == model.Demand[t]
         self.model.eq_constraint = Constraint(self.model.T, rule = rule_demand)
+
+        def rule_ramp_down(model, t, g):
+            if t==0:
+                return Constraint.Skip
+            return model.Pg[t, g] >= model.Pg[t-1, g] - model.Ramp[g]
+        self.model.ramp_down_constraint = Constraint(self.model.T, self.model.G, rule= rule_ramp_down)
+
+        def rule_ramp_up(model, t, g):
+            if t==0:
+                return Constraint.Skip
+            return model.Pg[t, g] <= model.Pg[t-1, g] + model.Ramp[g]
+        self.model.ramp_up_constraint = Constraint(self.model.T, self.model.G, rule= rule_ramp_up)
 
 
     def objective_function(self):

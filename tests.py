@@ -10,7 +10,7 @@ prod_df = pd.DataFrame({
     'Pmax': [40, 90, 50, 60],       
     'Pmin': [0, 0, 0, 0],      
     'marginal_costs': [10, 30, 35, 55],
-    'ramp': [10, 10, 10, 60] #to change
+    'ramp': [60, 60, 60, 60] #to change
 })
 
 demand = [155, 175, 155]
@@ -21,9 +21,9 @@ print(mc.get_price(1))
 print(mc.get_results(0))
 print(mc.get_profits())
 print(mc.get_social_cost(0))
-mpec = MPEC(producer=strategic_producer, alphas=[prod_df['marginal_costs'].to_list()]*3, marginal_costs=prod_df['marginal_costs'].to_list(), prod_df=prod_df, demand=demand, bigM=100)
-# print(mpec.get_profit())
-# print(mpec.get_results())
+mpec = MPEC(producer=strategic_producer, alphas=[prod_df['marginal_costs'].to_list().copy() for i in range(3)] , marginal_costs=prod_df['marginal_costs'].to_list(), prod_df=prod_df, demand=demand, bigM=100)
+print(mpec.get_profit())
+print(mpec.get_results(0))
 
 # utils.plot_merit_order(mpec.get_results(), demand=demand, strategic_producer=strategic_producer)
 

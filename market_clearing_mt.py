@@ -82,7 +82,7 @@ class MarketClearingMT:
         return value(self.model.dual[self.model.eq_constraint[t]]) #type: ignore
     
     def get_profits(self):
-        return [value(self.model.Pg[t,g])*self.get_price(t) - value(self.model.Pg[t,g])*value(self.marginal_costs[g]) for g in self.model.G for t in self.model.T] # type: ignore
+        return [sum(value(self.model.Pg[t,g])*self.get_price(t) - value(self.model.Pg[t,g])*value(self.marginal_costs[g]) for t in self.model.T) for g in self.model.G] # type: ignore
 
     def get_dispatch(self):
         return [[value(self.model.Pg[t,g]) for t in self.model.T] for g in self.model.G] #type: ignore

@@ -20,6 +20,7 @@ prod_df = pd.DataFrame({
 marginal_costs = prod_df['marginal_costs'].to_list()
 net_loads = 155+0*np.random.rand(5)
 print(net_loads)
+
 results_prod = pd.DataFrame()
 results_prod.index = prod_df['producers'] #type: ignore
 

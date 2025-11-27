@@ -1,5 +1,5 @@
 from market_clearing_mt import MarketClearingMT
-from strategic_behavior import MPEC, MPEClinearized
+from strategic_behavior_mt import MPEC, MPEClinearized
 import pandas as pd
 import utils
 from best_response import BR
@@ -21,7 +21,7 @@ print(mc.get_price(1))
 print(mc.get_results(0))
 print(mc.get_profits())
 print(mc.get_social_cost(0))
-# mpec = MPEC(producer=strategic_producer, alphas=prod_df['minFuelCosts'].to_list(), marginal_costs=prod_df['minFuelCosts'].to_list(), prod_df=prod_df, demand=demand, bigM=100)
+mpec = MPEC(producer=strategic_producer, alphas=[prod_df['marginal_costs'].to_list()]*3, marginal_costs=prod_df['marginal_costs'].to_list(), prod_df=prod_df, demand=demand, bigM=100)
 # print(mpec.get_profit())
 # print(mpec.get_results())
 

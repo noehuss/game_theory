@@ -25,7 +25,7 @@ class MarketClearingMT:
 
     def indexes(self):
         self.model.G = Set(initialize = self.prod_df.index.tolist())
-        self.model.T = RangeSet(0, len(self.demand)-1) #1 to T
+        self.model.T = RangeSet(0, len(self.demand)-1) #0 to T-1
 
     def parameters(self):
         self.model.Demand = Param(self.model.T, initialize = self.demand)

@@ -74,11 +74,11 @@ class MPEC:
         # Price and power balance
         def rule_price_balance(model, t, i):
             if t == 0:
-                expr_theta = 0
+                 expr_theta = - model.theta_max[t+1, i] + model.theta_min[t+1, i]
             elif t == self.T:
-                expr_theta = self.model.theta_max[t, i] - self.model.theta_min[t, i]
+                expr_theta = model.theta_max[t, i] - model.theta_min[t, i]
             else:
-                expr_theta = self.model.theta_max[t, i] - self.model.theta_min[t, i] - self.model.theta_min[t+1, i] + self.model.theta_min[t+1, i]
+                expr_theta = model.theta_max[t, i] - model.theta_min[t, i] - model.theta_max[t+1, i] + model.theta_min[t+1, i]
             expr = model.mu_max[t, i] - model.mu_min[t, i] - model.price[t] + expr_theta
             if i in model.Omega:
                 return model.alpha_g[t, i] + expr == 0
@@ -87,7 +87,7 @@ class MPEC:
         self.model.constraint_price_balance = Constraint(self.model.T, self.model.I, rule=rule_price_balance)
 
         def rule_eq_demand(model, t):
-            return sum(self.model.Pg[t, i] for i in self.model.I)==self.model.Demand[t]
+            return sum(model.Pg[t, i] for i in self.model.I)==model.Demand[t]
 
         self.model.constraint_power_balance = Constraint(self.model.T, rule=rule_eq_demand) #type: ignore
         
@@ -133,7 +133,7 @@ class MPEC:
 
         def rule_ramp_down_max(model, t, i):
             if t == 0:
-                return Constraint.Skip
+                return model.x_min[t,i] == 1
             return model.Pg[t, i] - model.Pg[t-1, i] + model.Ramp[i] <= self.bigM*model.x_min[t, i]
         self.model.constraint_ramp_down_max = Constraint(self.model.T, self.model.I, rule =rule_ramp_down_max)
 
@@ -145,7 +145,7 @@ class MPEC:
         
         def rule_ramp_up_max(model, t, i):
             if t==0:
-                return Constraint.Skip
+                return model.x_max[t, i] == 1
             return - model.Pg[t, i] + model.Pg[t-1, i] + model.Ramp[i] <= self.bigM*model.x_max[t, i]
         self.model.constraint_ramp_up_max = Constraint(self.model.T, self.model.I, rule=rule_ramp_up_max)
 
@@ -175,6 +175,8 @@ class MPEC:
         self.model.constraint_in_up_alpha_g.display()
         self.model.constraint_in_down_alpha_g.display()
         self.model.y_diff.display()
+        self.model.theta_max.display()
+        self.model.theta_min.display()
 
     def get_profit(self) -> float:
         return - value(self.model.obj) # type: ignore
@@ -183,10 +185,11 @@ class MPEC:
         return value(self.model.price[t])
     
     def update_alphas(self):
+        alphas = self.alphas.copy()
         for t in self.model.T:
             for i in self.prod_df[self.prod_df['producers']==self.producer].index.tolist():
-                self.alphas[t][i] = value(self.model.alpha_g[t, i]) #type: ignore
-        return self.alphas
+                alphas[t][i] = value(self.model.alpha_g[t, i]) #type: ignore
+        return alphas
     
     def get_results(self, t) -> pd.DataFrame:
         """Dataframe with production, bids and prices"""
@@ -204,10 +207,11 @@ class MPEC:
 
 class MPEClinearized(MPEC):
     def objective_function(self):
-        sum_cost = sum([self.marginal_costs[i]*self.model.Pg[i] for i in self.model.Omega]) #type: ignore
-        sum_mu = sum([self.model.mu_min[i] * self.model.Pmin[i]-self.model.mu_max[i] * self.model.Pmax[i] for i in self.model.I]) #type: ignore
-        sum_omega_bar = sum([self.model.alphas[i]*self.model.Pg[i] for i in self.model.OmegaBar]) #type: ignore
-        sum_pmax = sum([self.model.mu_max[i]*self.model.Pmax[i] for i in self.model.Omega]) #type: ignore
-        sum_pmin = sum([self.model.mu_min[i]*self.model.Pmin[i] for i in self.model.Omega])
-
-        self.model.obj = Objective(expr=(-(self.model.price*self.demand + sum_mu - sum_omega_bar - sum_pmin+ sum_pmax) + sum_cost), sense=minimize) #type: ignore
+        sum_cost = sum(sum([self.marginal_costs[i]*self.model.Pg[t, i] for i in self.model.Omega]) for t in self.model.T) #type: ignore
+        sum_mu = sum(sum([self.model.mu_min[t, i] * self.model.Pmin[i]-self.model.mu_max[t,i] * self.model.Pmax[i] for i in self.model.I]) for t in self.model.T) #type: ignore
+        sum_omega_bar = sum(sum([self.model.alphas[t, i]*self.model.Pg[t, i] for i in self.model.OmegaBar]) for t in self.model.T) #type: ignore
+        sum_pmax = sum(sum([self.model.mu_max[t, i]*self.model.Pmax[i] for i in self.model.Omega]) for t in self.model.T) #type: ignore
+        sum_pmin = sum(sum([self.model.mu_min[t, i]*self.model.Pmin[i] for i in self.model.Omega]) for t in self.model.T) #type: ignore
+        sum_gains = sum(self.model.price[t]*self.demand[t] for t in self.model.T)
+        sum_thetas = sum(sum((self.model.theta_max[t, i]-self.model.theta_min[t, i])*self.model.Ramp[i] for i in self.model.OmegaBar) for t in self.model.T)
+        self.model.obj = Objective(expr=(-(sum_gains + sum_mu - sum_omega_bar - sum_pmin+ sum_pmax + sum_thetas) + sum_cost), sense=minimize) #type: ignore

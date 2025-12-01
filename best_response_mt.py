@@ -1,7 +1,8 @@
-from strategic_behavior_mt import MPEC #, MPEClinearized
+from strategic_behavior_mt import MPEC, MPEClinearized
 from market_clearing_mt import MarketClearingMT
 import pandas as pd
 import numpy as np
+import copy
 import matplotlib.pyplot as plt
 import utils as ui
 
@@ -13,7 +14,8 @@ class BR():
         self.prod_df = prod_df
 
         self.iteration = 0
-        self.dict_alphas = {0: bids_init}
+        self.dict_alphas = {}
+        self.dict_alphas[0] = copy.deepcopy(bids_init)
         self.dict_profits_mpec = {0: [0.0 for producer in self.prod_df['producers'].values.tolist()] }
         self.prices = [0]
         self.dict_profits = {}
@@ -33,28 +35,30 @@ class BR():
         self.nb_iter = nb_iter
         while self.iteration <= nb_iter and not self.convergenceReached():
             self.iteration += 1
-            self.dict_alphas[self.iteration]=self.dict_alphas[self.iteration-1].copy()
+            # deep copy to avoid sharing inner lists between iterations
+            self.dict_alphas[self.iteration] = copy.deepcopy(self.dict_alphas[self.iteration-1])
             self.dict_profits_mpec[self.iteration] = self.dict_profits_mpec[self.iteration-1].copy()
             for index, producer in enumerate(self.prod_df['producers'].values.tolist()):            
                 print(f"Strategic producer {producer}")
                 # Calculation of the profit before strategic decision
-                mc = MarketClearingMT(bids=self.dict_alphas[self.iteration].copy(), 
+                mc = MarketClearingMT(bids=copy.deepcopy(self.dict_alphas[self.iteration]), 
                                 marginal_costs=self.marginal_costs, 
                                 demand=self.demand, 
                                 prod_df=self.prod_df)
                 profit_bf_strategic_decision = mc.get_profits()[index]
                 mpec = MPEC(producer=producer, 
-                            alphas=self.dict_alphas[self.iteration].copy(), 
+                            alphas=copy.deepcopy(self.dict_alphas[self.iteration]), 
                             marginal_costs=self.marginal_costs, 
                             prod_df=self.prod_df, 
                             demand=self.demand, tau=tau_alphas)
-                self.dict_alphas[self.iteration] = mpec.update_alphas()
+                # ensure the updated alphas are stored as an independent object
+                self.dict_alphas[self.iteration] = copy.deepcopy(mpec.update_alphas())
                 self.dict_profits_mpec[self.iteration][index] = mpec.get_profit()
                 self.estimated_profit[producer].append(mpec.get_profit())
                 profit = mpec.get_profit()
-                self.increase_profit[producer].append(100*(mpec.get_profit()-profit_bf_strategic_decision)/profit if profit > 0 else 0) #%
+                self.increase_profit[producer].append((profit-profit_bf_strategic_decision))
 
-            mc = MarketClearingMT(bids=self.dict_alphas[self.iteration].copy(), 
+            mc = MarketClearingMT(bids=copy.deepcopy(self.dict_alphas[self.iteration]), 
                                 marginal_costs=self.marginal_costs, 
                                 demand=self.demand, 
                                 prod_df=self.prod_df)
@@ -62,16 +66,16 @@ class BR():
             self.dict_profits[self.iteration] = mc.get_profits()
             self.dict_dispatch[self.iteration] = mc.get_dispatch()
 
-        if not self.convergenceReached():
-            self.iteration += 1
-            self.prices.append(sum(self.prices[-10:-1])/10)
-            profit_last_iter = [self.dict_profits[k] for k in range(self.iteration-1, self.iteration-10, -1)]
-            dispatch_last_iter = [self.dict_dispatch[k] for k in range(self.iteration-1, self.iteration-10, -1)]
-            alphas_last_iter = [self.dict_alphas[k] for k in range(self.iteration-1, self.iteration-10, -1)]
-            self.dict_profits[self.iteration] = np.array([sum(i) for i in zip(*profit_last_iter)])/10
-            self.dict_dispatch[self.iteration] = np.array([sum(i) for i in zip(*dispatch_last_iter)])/10
-            self.dict_alphas[self.iteration] = np.array([sum(i) for i in zip(*alphas_last_iter)])/10 #type: ignore
-            print(self.dict_alphas)
+        # if not self.convergenceReached():
+        #     self.iteration += 1
+        #     self.prices.append(sum(self.prices[-10:-1])/10)
+        #     profit_last_iter = [self.dict_profits[k] for k in range(self.iteration-1, self.iteration-10, -1)]
+        #     dispatch_last_iter = [self.dict_dispatch[k] for k in range(self.iteration-1, self.iteration-10, -1)]
+        #     alphas_last_iter = [self.dict_alphas[k] for k in range(self.iteration-1, self.iteration-10, -1)]
+        #     self.dict_profits[self.iteration] = np.array([sum(i) for i in zip(*profit_last_iter)])/10
+        #     self.dict_dispatch[self.iteration] = np.array([sum(i) for i in zip(*dispatch_last_iter)])/10
+        #     self.dict_alphas[self.iteration] = np.array([sum(i) for i in zip(*alphas_last_iter)])/10 #type: ignore
+        #     print(self.dict_alphas)
 
 
     def get_equilibrium_bids(self) -> list:
@@ -94,13 +98,14 @@ class BR():
         return convergence_profit and feasible_equilibrium
 
     
-    def get_results(self) -> tuple[pd.DataFrame, bool]:
+    def get_results(self, t=0) -> tuple[pd.DataFrame, bool]:
         data = {
-            'production':  self.dict_dispatch[self.iteration],
-            'bids': self.dict_alphas[self.iteration],
+            'production':  np.array(self.dict_dispatch[self.iteration]).T[t],
+            'bids': self.dict_alphas[self.iteration][t],
             'producer': self.prod_df['producers'].to_list(),
             'capacities': self.prod_df['capacities'].to_list()
         }
+        print(data)
 
         return pd.DataFrame(data), self.convergenceReached()
     
@@ -148,7 +153,7 @@ class BR():
         df.plot(ax=ax, marker='o', color=ui.colors)
         ax.set_title('Variation of profit, before and after strategic decision')
         ax.set_xlabel('Number of iteration')
-        ax.set_ylabel('$\Delta$ Profit (%)') #type: ignore
+        ax.set_ylabel('$\Delta$ Profit') #type: ignore
         ax.grid(True, alpha=0.6, linestyle='--')
         ax.legend(title='Producer')
         plt.show()

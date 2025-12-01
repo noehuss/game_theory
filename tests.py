@@ -10,10 +10,10 @@ prod_df = pd.DataFrame({
     'Pmax': [40, 90, 50, 60],       
     'Pmin': [0, 0, 0, 0],      
     'marginal_costs': [10, 30, 45, 70],
-    'ramp': [60, 60, 60, 60] #to change
+    'ramp': [100, 100, 100, 100] #to change
 })
 
-demand = [155, 155, 155]
+demand = [70, 70, 70]
 strategic_producer = 'P1'
 mc = MarketClearingMT(bids=[prod_df['marginal_costs'].to_list()]*3, marginal_costs=prod_df['marginal_costs'].to_list(), demand=demand, prod_df=prod_df)
 print(mc.get_price(1))
@@ -34,15 +34,18 @@ print(mpec.get_results(0))
 
 # utils.plot_merit_order(mpec.get_results(), demand=demand, strategic_producer=strategic_producer, sp_profit=profit)
 
-
+demand = [115, 115, 115]
 br = BR(bids_init=[prod_df['marginal_costs'].to_list().copy() for i in range(3)], marginal_costs=[10, 30, 35, 55], demand=demand, prod_df=prod_df, tolerance=0.01)
 br.run_BR(200)
-# results_br, as_converged = br.get_results()
-# price_br = br.get_price()
-# print(br.dict_alphas)
-# print(price_br)
-# br.plot_estimated_profits_evo()
-# br.plot_strategic_behaviour()
+results_br, as_converged = br.get_results()
+price_br = br.get_price()
+print("bids: ", br.dict_alphas)
+print("dispatch: ", br.dict_dispatch)
+print("profits: ", br.dict_profits)
+print("inc profits: ", br.increase_profit)
+print("price: ",price_br)
+br.plot_estimated_profits_evo()
+br.plot_strategic_behaviour()
 # # mc = MarketClearing(bids=[10, 30, 35], marginal_costs=[10, 30, 35], demand=demand, prod_df=prod_df)
 # # results_mc = mc.get_results()
 # # price_mc = mc.get_price()

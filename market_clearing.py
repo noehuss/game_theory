@@ -52,6 +52,9 @@ class MarketClearing:
         solver = SolverFactory("gurobi", solver_io="python")  # Make sure Gurobi is installed and properly configured
         # Solve the model
         solution = solver.solve(self.model, tee=True)
+        total_dispatch = sum(value(self.model.Pg[g]) for g in self.model.G)
+        print(f"Market clearing check: total dispatch = {total_dispatch},   demand = {self.demand}")
+        print(f"DEBUG: Market clearing: dispatch = {total_dispatch}, demand = {self.demand}")
         self.model.Pg.display()
         self.model.dual.display()
 

@@ -66,7 +66,11 @@ class MultiPeriodBR:
 
         for t in range(self.T):
             print(f"\n===== TIME STEP {t} =====")
+            demand_t = self.demand_ts[t]
+            print(f"Demand at time {t}: {demand_t}")
+            print(f"DEBUG: demand_ts = {self.demand_ts}")
 
+            
             # Build prod_df for this time step
             prod_df_t = self.prod_df_base.copy()
 
@@ -97,7 +101,9 @@ class MultiPeriodBR:
 
             df_res_t, conv_t = br_t.get_results()
             price_t = br_t.get_price()
-
+            print("DEBUG: BR-equilibrium dispatch:", df_res_t['production'].tolist())
+            print("DEBUG: Sum dispatch =", sum(df_res_t['production']))
+            print("DEBUG: Price =", price_t)
             print(f"  Converged: {conv_t}, price = {price_t:.2f}")
             print(df_res_t)
 

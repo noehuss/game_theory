@@ -2,6 +2,8 @@
 
 import pandas as pd
 from multi_period_br import MultiPeriodBR
+from plot_results import plot_results
+
 
 if __name__ == "__main__":
     # Example producer data
@@ -32,8 +34,10 @@ if __name__ == "__main__":
         tolerance=0.02,
     )
 
-    mp_br.run(nb_iter_per_t=20)
+    mp_br.run(nb_iter_per_t=200)
 
     df_all = mp_br.get_bids_time()
     print("\nAll time-step results:")
     print(df_all)
+
+    plot_results(mp_br, prod_df, marginal_costs)

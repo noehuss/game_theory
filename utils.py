@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 # Colormap
 colors = ["#384E77","#8BBEB2","#E6F9AF","pink", "limegreen","black","orange","grey","maroon"]  # R -> G -> B
-
+# fontsize
+plt.rcParams.update({'font.size': 16})
 
 def plot_merit_order(df:pd.DataFrame, demand:int, strategic_producer=None, sp_profit=None, ax_fig=None):
     """
@@ -11,23 +12,23 @@ def plot_merit_order(df:pd.DataFrame, demand:int, strategic_producer=None, sp_pr
     production: quantities produced by each producer
     bids: Bids of each producer
     producer: Producer name
-    capacities: Capacities of each generator
+    Pmax: Capacities of each generator
     """
     colors = ["#384E77","#8BBEB2","#E6F9AF","pink","limegreen","black","orange","grey","maroon"]
     df["color"] = pd.Series(colors[:len(df)])
     df["xpos"] = ""
     df.sort_values(by="bids", inplace=True)
-    df["cumulative_capa"] = df["capacities"].cumsum()
+    df["cumulative_capa"] = df["Pmax"].cumsum()
     
     for index in df.index:
         print(df.index)
         i = df.index.get_loc(index)
         print(i)
         if i == 0:
-            df.loc[index, "xpos"] = df.at[index, 'capacities']/2
+            df.loc[index, "xpos"] = df.at[index, 'Pmax']/2
         else:
             print(index)
-            df.loc[index, "xpos"] = df.at[index, 'capacities']/2 + df.iloc[i-1].at["cumulative_capa"]
+            df.loc[index, "xpos"] = df.at[index, 'Pmax']/2 + df.iloc[i-1].at["cumulative_capa"]
 
     def cut_off(demand):
         #To get the cutoff power plant 
@@ -48,7 +49,7 @@ def plot_merit_order(df:pd.DataFrame, demand:int, strategic_producer=None, sp_pr
     y = df['bids'].values.tolist()
 
     #width
-    w = df['capacities'].values.tolist()
+    w = df['Pmax'].values.tolist()
     cut_off_power_plant = cut_off(demand)
 
     if ax_fig is None:
@@ -58,7 +59,7 @@ def plot_merit_order(df:pd.DataFrame, demand:int, strategic_producer=None, sp_pr
 
     ax.bar(xpos, height=y, width=w, fill=True, color=df["color"].tolist())
 
-    ax.set_xlim(0, df["capacities"].sum()+10)
+    ax.set_xlim(0, df["Pmax"].sum()+10)
     ax.set_ylim(0, df['bids'].max()+20)
 
     ax.hlines(y=df.at[cut_off_power_plant, 'bids'],

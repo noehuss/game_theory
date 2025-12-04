@@ -1,15 +1,15 @@
-from market_clearing_mt import MarketClearingMT
-from strategic_behavior_mt import MPEC, MPEClinearized
+from MT.market_clearing_mt import MarketClearingMT
+from MT.strategic_behavior_mt import MPEC, MPEClinearized
 import pandas as pd
 import utils
-from best_response_mt import BR
+from MT.best_response_mt import BR
 
 prod_df = pd.DataFrame({
     'producers': ['P1', 'P2', 'P3', 'P4'],
-    'capacities': [40, 90, 50, 90], 
+    'capacities': [40, 90, 50, 60], 
     'Pmax': [40, 90, 50, 60],       
     'Pmin': [0, 0, 0, 0],      
-    'marginal_costs': [10, 30, 45, 70],
+    'marginal_costs': [10, 30, 35, 55],
     'ramp': [100, 100, 100, 100] #to change
 })
 
@@ -34,8 +34,8 @@ print(mpec.get_results(0))
 
 # utils.plot_merit_order(mpec.get_results(), demand=demand, strategic_producer=strategic_producer, sp_profit=profit)
 
-demand = [115, 115, 115]
-br = BR(bids_init=[prod_df['marginal_costs'].to_list().copy() for i in range(3)], marginal_costs=[10, 30, 35, 55], demand=demand, prod_df=prod_df, tolerance=0.01)
+demand = [155, 155, 155]
+br = BR(bids_init=[prod_df['marginal_costs'].to_list().copy() for i in range(len(demand))], marginal_costs=[10, 30, 35, 55], demand=demand, prod_df=prod_df, tolerance=0.01)
 br.run_BR(200)
 results_br, as_converged = br.get_results()
 price_br = br.get_price()

@@ -108,11 +108,17 @@ class BR():
 
     
     def get_results(self, t=0) -> tuple[pd.DataFrame, bool]:
+
+        Pramp = np.array(self.dict_dispatch[self.iteration]).T[t-1] + self.prod_df['ramp'].to_numpy() if t>0 else np.array([1000]*len(self.prod_df))
+    
+        Pmax = np.minimum(self.prod_df['Pmax'].to_numpy(), Pramp)
+
         data = {
             'production':  np.array(self.dict_dispatch[self.iteration]).T[t],
             'bids': self.dict_alphas[self.iteration][t],
             'producer': self.prod_df['producers'].to_list(),
-            'capacities': self.prod_df['capacities'].to_list()
+            'capacities': self.prod_df['capacities'].to_list(),
+            'Pmax': Pmax.tolist(),
         }
         print(data)
 

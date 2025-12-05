@@ -66,24 +66,52 @@ def search_worst_inefficiency(prod_df: pd.DataFrame, demand:int, nb_segments:int
     print(thetas)
     print(list_PoA)
     print(f"Share of instances that converged: {sum(list_convergence)/len(list_convergence):.2f}")
-    plt.hist(list_PoA, bins=20)
-    plt.show()
+    # plt.hist(list_PoA, bins=20)
+    # plt.show()
 
     return max(list_PoA)
 
 
-if __name__ == "__main__":
-    worst_inefficiency = search_worst_inefficiency(prod_df=prod_df, demand=demand, nb_segments=3)
-    print(f"Worst inefficiency (PoA) found: {worst_inefficiency:.2f}")
-# def inefficiencies(nb_players, capacity, c_lower, c_upper, nb_segments:int=2):
-#     prod_df = pd.DataFrame(columns=['producers', 'capacities', 'minFuelCosts', 'maxFuelCosts'])
-#     list_inefficiencies = []
-#     for i in range(nb_players+1):
-#         prod_df = pd.concat([pd.DataFrame([[f'P{i}', capacity, c_lower, c_upper]], columns=prod_df.columns),  prod_df], ignore_index=True)
-#         demand = prod_df['capacities'].sum()*0.55 
-#         if i < 3:
-#             continue
-#         list_inefficiencies.append(search_worst_inefficiency(prod_df=prod_df, demand=demand, nb_segments=nb_segments))
-#     return list_inefficiencies
 
-# print(inefficiencies(5, 100, 10, 50, nb_segments=3))
+def inefficiencies(nb_players, capacity, c_lower, c_upper, nb_segments:int=2):
+    prod_df = pd.DataFrame(columns=['producers', 'capacities', 'minFuelCosts', 'maxFuelCosts'])
+    list_inefficiencies = []
+    for i in range(nb_players+1):
+        prod_df = pd.concat([pd.DataFrame([[f'P{i}', capacity, c_lower, c_upper]], columns=prod_df.columns),  prod_df], ignore_index=True)
+        demand = prod_df['capacities'].sum()*0.55 
+        if i < 3:
+            continue
+        list_inefficiencies.append(search_worst_inefficiency(prod_df=prod_df, demand=demand, nb_segments=nb_segments))
+    return list_inefficiencies
+
+
+vals = inefficiencies(5, 100, 10, 50, nb_segments=3)
+players = list(range(3, 3 + len(vals)))   # MATCH LENGTH
+
+
+
+plt.figure(figsize=(7,5))
+plt.plot(players, vals, marker='o')
+plt.title("Market Inefficiency vs Number of Producers")
+plt.xlabel("Number of Producers")
+plt.ylabel("Inefficiency")
+plt.grid(True)
+plt.xticks(players)
+plt.show()
+
+all_vals = {}
+for seg in [1,2,3,4]:
+    vals = inefficiencies(4, 100, 10, 50, nb_segments=seg)
+    all_vals[seg] = vals
+
+plt.figure(figsize=(8,6))
+for seg, vals in all_vals.items():
+    players = list(range(3, 3 + len(vals)))
+    plt.plot(players, vals, marker='o', label=f"{seg} segments")
+
+plt.title("Inefficiency vs Number of Producers for Different Bid Segments")
+plt.xlabel("Number of Producers")
+plt.ylabel("Inefficiency")
+plt.grid(True)
+plt.legend()
+plt.show()

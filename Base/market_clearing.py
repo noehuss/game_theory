@@ -74,7 +74,8 @@ class MarketClearing:
             'production': [value(self.model.Pg[i]) for i in self.model.G], #type: ignore
             'bids': self.marginal_costs,
             'producer': self.prod_df['producers'].to_list(),
-            'capacities': self.prod_df['capacities'].to_list() #type: ignore
+            'capacities': self.prod_df['capacities'].to_list(), #type: ignore
+            'Pmax': self.prod_df['Pmax'].to_list()
         }
         return pd.DataFrame(data)
     
